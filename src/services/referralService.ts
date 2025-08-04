@@ -52,17 +52,15 @@ class ReferralService extends ApiService {
       queryParams.append('source', filters.source)
     }
 
-    // Create a new API service instance for the customers endpoint
-
+    // Use the enhanced ApiService with proper error handling
+    const response = await this.request<CustomerReferralsResponse>(
+      'GET',
+      `/marketer/${marketerId}/customers?${queryParams}`,
+      undefined,
+      { baseURL: '/api/v1' } // Override base URL for this specific call
+    )
     
-    const response = await fetch(`/api/v1/marketer/${marketerId}/customers?${queryParams}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    const data = await response.json()
-    return data.referrals || []
+    return response.referrals || []
   }
 
   async getReferralStats(marketerId: string): Promise<ReferralStats> {

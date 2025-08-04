@@ -46,7 +46,7 @@ describe('CommissionHistory', () => {
       />
     )
 
-    expect(screen.getByText('Investment Fund A')).toBeInTheDocument()
+    expect(screen.getByText('product1')).toBeInTheDocument()
     expect(screen.getByText('$50.00')).toBeInTheDocument()
     expect(screen.getByText('Approved')).toBeInTheDocument()
   })

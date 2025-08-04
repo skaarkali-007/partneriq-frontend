@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState, AppDispatch } from '../store'
 import { useAuth } from '../contexts/AuthContext'
@@ -8,11 +8,15 @@ import {
   setFilters,
   clearFilters,
   setCurrentPage,
+  clearError,
+  setRetrying,
+  incrementRetryCount,
 } from '../store/slices/commissionSlice'
 import { CommissionHistory } from '../components/commissions/CommissionHistory'
 import { CommissionAnalytics } from '../components/commissions/CommissionAnalytics'
 import { CommissionFilters } from '../components/commissions/CommissionFilters'
 import { DashboardLayout } from '../components/dashboard/DashboardLayout'
+import { ErrorDisplay } from '../components/common/ErrorDisplay'
 import { CommissionFilters as CommissionFiltersType } from '../types/api'
 
 export const CommissionsPage: React.FC = () => {
@@ -22,6 +26,7 @@ export const CommissionsPage: React.FC = () => {
     commissions,
     analytics,
     isLoading,
+    isRetrying,
     error,
     pagination,
     filters,
@@ -54,6 +59,35 @@ export const CommissionsPage: React.FC = () => {
     dispatch(setCurrentPage(page))
   }
 
+  const handleRetry = useCallback(async () => {
+    if (!user?.id || !error?.retryable) return
+
+    dispatch(setRetrying(true))
+    dispatch(incrementRetryCount())
+
+    try {
+      // Retry the failed operation based on the current tab
+      if (activeTab === 'history') {
+        await dispatch(fetchCommissions({ 
+          page: pagination.currentPage, 
+          filters: filters as CommissionFiltersType, 
+          marketerId: user.id 
+        })).unwrap()
+      } else {
+        await dispatch(fetchCommissionAnalytics(user.id)).unwrap()
+      }
+    } catch (retryError) {
+      // Error will be handled by the Redux slice
+      console.error('Retry failed:', retryError)
+    } finally {
+      dispatch(setRetrying(false))
+    }
+  }, [dispatch, user?.id, error?.retryable, activeTab, pagination.currentPage, filters])
+
+  const handleDismissError = useCallback(() => {
+    dispatch(clearError())
+  }, [dispatch])
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -65,17 +99,13 @@ export const CommissionsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Enhanced Error Display */}
+        <ErrorDisplay
+          error={error}
+          isRetrying={isRetrying}
+          onRetry={handleRetry}
+          onDismiss={handleDismissError}
+        />
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">
@@ -114,6 +144,7 @@ export const CommissionsPage: React.FC = () => {
             <CommissionHistory
               commissions={commissions}
               isLoading={isLoading}
+              isRetrying={isRetrying}
               pagination={pagination}
               onPageChange={handlePageChange}
             />

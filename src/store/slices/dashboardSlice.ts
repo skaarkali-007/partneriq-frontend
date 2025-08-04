@@ -163,8 +163,18 @@ export const fetchDashboardData = createAsyncThunk(
       console.log('Dashboard - Referral links from Redux:', referralLinks)
 
       // Calculate stats from referrals data (same logic as ReferralAnalytics component)
-      const totalConversions = referrals.filter(r => r.status === 'converted').length
-      const totalClicks = referralLinks.reduce((sum, link) => sum + (link.clickCount || 0), 0)
+      const totalConversions = referrals.filter((r: any) => r.status === 'converted').length
+      
+      // Handle referralLinks structure - ensure it's always treated as an array
+      let referralLinksArray: any[] = []
+      if (Array.isArray(referralLinks)) {
+        referralLinksArray = referralLinks
+      } else {
+        // If referralLinks is not an array, treat as empty to prevent errors
+        referralLinksArray = []
+      }
+      
+      const totalClicks = referralLinksArray.reduce((sum: number, link: any) => sum + (link.clickCount || 0), 0)
       const conversionRate = totalClicks > 0 ? totalConversions / totalClicks : 0
 
       console.log('Dashboard - Calculated stats:', {
@@ -172,7 +182,9 @@ export const fetchDashboardData = createAsyncThunk(
         totalClicks,
         conversionRate,
         referralsLength: referrals.length,
-        referralLinksLength: referralLinks.length
+        referralLinksLength: Array.isArray(referralLinks) ? referralLinks.length : 'not array',
+        referralLinksType: typeof referralLinks,
+        referralLinksArrayLength: referralLinksArray.length
       })
 
       const totalCommissions = referrals

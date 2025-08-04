@@ -1,6 +1,97 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import { commissionService } from '../../services/commissionService'
 import { Commission, PaymentMethod, PayoutRequest, CommissionFilters } from '../../types/api'
+import { AppError, ErrorType } from '../../utils/errorHandler'
+
+// Import ErrorLogger for comprehensive logging
+class ReduxErrorLogger {
+  static logSliceError(sliceName: string, actionType: string, error: any, endpoint?: string) {
+    const logData = {
+      sliceName,
+      actionType,
+      endpoint,
+      errorType: error.type || 'unknown',
+      status: error.status,
+      message: error.message,
+      retryable: error.retryable,
+      retryCount: error.retryCount,
+      lastRetryAt: error.lastRetryAt,
+      contentType: error.contentType,
+      responseText: error.responseText ? error.responseText.substring(0, 500) + '...' : undefined,
+      timestamp: new Date().toISOString(),
+      userId: this.getCurrentUserId(),
+      sessionId: this.getSessionId()
+    }
+
+    console.error(`[REDUX_${sliceName.toUpperCase()}] ${actionType} failed:`, logData)
+
+    // In production, send to logging service
+    if (process.env.NODE_ENV === 'production') {
+      this.sendToLoggingService({
+        level: 'ERROR',
+        service: `redux-${sliceName}`,
+        ...logData
+      })
+    }
+  }
+
+  static logRetryAttempt(sliceName: string, actionType: string, retryCount: number, error: any) {
+    const logData = {
+      sliceName,
+      actionType,
+      retryCount,
+      errorType: error.type,
+      status: error.status,
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }
+
+    console.warn(`[REDUX_${sliceName.toUpperCase()}] Retry attempt ${retryCount} for ${actionType}:`, logData)
+
+    if (process.env.NODE_ENV === 'production') {
+      this.sendToLoggingService({
+        level: 'WARN',
+        service: `redux-${sliceName}`,
+        ...logData
+      })
+    }
+  }
+
+  private static getCurrentUserId(): string | undefined {
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        return payload.userId || payload.sub
+      }
+    } catch {
+      // Ignore errors
+    }
+    return undefined
+  }
+
+  private static getSessionId(): string {
+    let sessionId = sessionStorage.getItem('sessionId')
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      sessionStorage.setItem('sessionId', sessionId)
+    }
+    return sessionId
+  }
+
+  private static sendToLoggingService(_logEntry: any): void {
+    try {
+      // Send to external logging service in production
+      // fetch('/api/v1/logs', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(logEntry)
+      // }).catch(() => {})
+    } catch {
+      // Ignore logging errors
+    }
+  }
+}
 
 export interface CommissionAnalytics {
   totalCommissions: number
@@ -28,6 +119,18 @@ export interface CommissionAnalytics {
   }
 }
 
+interface CommissionError {
+  message: string
+  type: ErrorType
+  status?: number
+  retryable: boolean
+  retryCount?: number
+  lastRetryAt?: string
+  responseText?: string
+  contentType?: string
+  endpoint?: string
+}
+
 interface CommissionState {
   commissions: Commission[]
   payoutRequests: PayoutRequest[]
@@ -36,7 +139,8 @@ interface CommissionState {
   availableBalance: number
   pendingBalance: number
   isLoading: boolean
-  error: string | null
+  isRetrying: boolean
+  error: CommissionError | null
   pagination: {
     currentPage: number
     totalPages: number
@@ -49,6 +153,14 @@ interface CommissionState {
     dateTo?: string
     productId?: string
   }
+  loadingStates: {
+    fetchingCommissions: boolean
+    fetchingSummary: boolean
+    fetchingAnalytics: boolean
+    fetchingBalance: boolean
+    fetchingPaymentMethods: boolean
+    fetchingPayoutRequests: boolean
+  }
 }
 
 const initialState: CommissionState = {
@@ -59,6 +171,7 @@ const initialState: CommissionState = {
   availableBalance: 0,
   pendingBalance: 0,
   isLoading: false,
+  isRetrying: false,
   error: null,
   pagination: {
     currentPage: 1,
@@ -67,6 +180,47 @@ const initialState: CommissionState = {
     itemsPerPage: 20,
   },
   filters: {},
+  loadingStates: {
+    fetchingCommissions: false,
+    fetchingSummary: false,
+    fetchingAnalytics: false,
+    fetchingBalance: false,
+    fetchingPaymentMethods: false,
+    fetchingPayoutRequests: false,
+  },
+}
+
+// Helper function to create error objects
+const createCommissionError = (error: any, endpoint?: string): CommissionError => {
+  if (error instanceof AppError) {
+    return {
+      message: error.message,
+      type: error.type,
+      status: error.status,
+      retryable: ['network', 'server', 'timeout', 'parse'].includes(error.type),
+      responseText: error.responseText,
+      contentType: error.contentType,
+      endpoint,
+    }
+  }
+  
+  // Handle API service errors (from enhanced ApiService)
+  if (error.type && error.message) {
+    return {
+      message: error.message,
+      type: error.type,
+      status: error.status,
+      retryable: ['network', 'server', 'timeout', 'parse'].includes(error.type),
+      endpoint,
+    }
+  }
+  
+  return {
+    message: error.message || 'An unexpected error occurred',
+    type: 'unknown',
+    retryable: false,
+    endpoint,
+  }
 }
 
 // Async thunks
@@ -89,7 +243,7 @@ export const fetchCommissions = createAsyncThunk(
         }
       }
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch commissions')
+      return rejectWithValue(createCommissionError(error, '/commissions'))
     }
   }
 )
@@ -101,7 +255,7 @@ export const fetchCommissionSummary = createAsyncThunk(
       const summary = await commissionService.getCommissionSummary()
       return summary
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch commission summary')
+      return rejectWithValue(createCommissionError(error, '/commissions/summary'))
     }
   }
 )
@@ -114,7 +268,7 @@ export const fetchPaymentMethods = createAsyncThunk(
       const paymentMethods = await paymentMethodService.getPaymentMethods()
       return paymentMethods
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch payment methods')
+      return rejectWithValue(createCommissionError(error, '/payment-methods'))
     }
   }
 )
@@ -127,7 +281,7 @@ export const addPaymentMethod = createAsyncThunk(
       const paymentMethod = await paymentMethodService.addPaymentMethod(paymentMethodData)
       return paymentMethod
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to add payment method')
+      return rejectWithValue(createCommissionError(error, '/payment-methods'))
     }
   }
 )
@@ -140,7 +294,7 @@ export const updatePaymentMethod = createAsyncThunk(
       const paymentMethod = await paymentMethodService.updatePaymentMethod(id, data)
       return paymentMethod
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to update payment method')
+      return rejectWithValue(createCommissionError(error, `/payment-methods/${id}`))
     }
   }
 )
@@ -153,7 +307,7 @@ export const deletePaymentMethod = createAsyncThunk(
       await paymentMethodService.deletePaymentMethod(id)
       return id
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to delete payment method')
+      return rejectWithValue(createCommissionError(error, `/payment-methods/${id}`))
     }
   }
 )
@@ -166,7 +320,7 @@ export const fetchPayoutRequests = createAsyncThunk(
       const response = await payoutService.getPayoutRequests()
       return response.items
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch payout requests')
+      return rejectWithValue(createCommissionError(error, '/payout-requests'))
     }
   }
 )
@@ -179,7 +333,7 @@ export const createPayoutRequest = createAsyncThunk(
       const payoutRequest = await payoutService.createPayoutRequest(request)
       return payoutRequest
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create payout request')
+      return rejectWithValue(createCommissionError(error, '/payout-requests'))
     }
   }
 )
@@ -192,7 +346,7 @@ export const fetchBalance = createAsyncThunk(
       const balance = await payoutService.getBalance()
       return balance
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch balance')
+      return rejectWithValue(createCommissionError(error, '/balance'))
     }
   }
 )
@@ -204,7 +358,7 @@ export const fetchCommissionAnalytics = createAsyncThunk(
       const analytics = await commissionService.getCommissionAnalytics()
       return analytics
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch commission analytics')
+      return rejectWithValue(createCommissionError(error, '/commissions/analytics'))
     }
   }
 )
@@ -225,107 +379,225 @@ const commissionSlice = createSlice({
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload
     },
+    setRetrying: (state, action: PayloadAction<boolean>) => {
+      state.isRetrying = action.payload
+    },
+    incrementRetryCount: (state) => {
+      if (state.error) {
+        state.error.retryCount = (state.error.retryCount || 0) + 1
+        state.error.lastRetryAt = new Date().toISOString()
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
       // Fetch commissions
       .addCase(fetchCommissions.pending, (state) => {
+        state.loadingStates.fetchingCommissions = true
         state.isLoading = true
-        state.error = null
+        // Only clear error if this is not a retry attempt
+        if (!state.isRetrying) {
+          state.error = null
+        }
       })
       .addCase(fetchCommissions.fulfilled, (state, action) => {
+        state.loadingStates.fetchingCommissions = false
         state.isLoading = false
+        state.isRetrying = false
+        state.error = null
         state.commissions = action.payload.commissions
         state.pagination = action.payload.pagination
       })
       .addCase(fetchCommissions.rejected, (state, action) => {
+        state.loadingStates.fetchingCommissions = false
         state.isLoading = false
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        // Enhanced error logging for monitoring
+        ReduxErrorLogger.logSliceError('commission', 'fetchCommissions', error, error.endpoint)
       })
       // Fetch commission summary
+      .addCase(fetchCommissionSummary.pending, (state) => {
+        state.loadingStates.fetchingSummary = true
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(fetchCommissionSummary.fulfilled, (state, action) => {
+        state.loadingStates.fetchingSummary = false
+        state.isRetrying = false
+        state.error = null
         state.availableBalance = action.payload.availableBalance
         state.pendingBalance = action.payload.pendingCommissions
       })
       .addCase(fetchCommissionSummary.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.loadingStates.fetchingSummary = false
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'fetchCommissionSummary', error, error.endpoint)
       })
       // Fetch payment methods
+      .addCase(fetchPaymentMethods.pending, (state) => {
+        state.loadingStates.fetchingPaymentMethods = true
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(fetchPaymentMethods.fulfilled, (state, action) => {
+        state.loadingStates.fetchingPaymentMethods = false
+        state.isRetrying = false
+        state.error = null
         state.paymentMethods = action.payload
       })
       .addCase(fetchPaymentMethods.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.loadingStates.fetchingPaymentMethods = false
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'fetchPaymentMethods', error, error.endpoint)
       })
       // Add payment method
+      .addCase(addPaymentMethod.pending, (state) => {
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(addPaymentMethod.fulfilled, (state, action) => {
+        state.isRetrying = false
+        state.error = null
         state.paymentMethods.push(action.payload)
       })
       .addCase(addPaymentMethod.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'addPaymentMethod', error, error.endpoint)
       })
       // Update payment method
+      .addCase(updatePaymentMethod.pending, (state) => {
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(updatePaymentMethod.fulfilled, (state, action) => {
+        state.isRetrying = false
+        state.error = null
         const index = state.paymentMethods.findIndex(method => method.id === action.payload.id)
         if (index !== -1) {
           state.paymentMethods[index] = action.payload
         }
       })
       .addCase(updatePaymentMethod.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'updatePaymentMethod', error, error.endpoint)
       })
       // Delete payment method
+      .addCase(deletePaymentMethod.pending, (state) => {
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(deletePaymentMethod.fulfilled, (state, action) => {
+        state.isRetrying = false
+        state.error = null
         state.paymentMethods = state.paymentMethods.filter(method => method.id !== action.payload)
       })
       .addCase(deletePaymentMethod.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'deletePaymentMethod', error, error.endpoint)
       })
       // Fetch payout requests
+      .addCase(fetchPayoutRequests.pending, (state) => {
+        state.loadingStates.fetchingPayoutRequests = true
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(fetchPayoutRequests.fulfilled, (state, action) => {
+        state.loadingStates.fetchingPayoutRequests = false
+        state.isRetrying = false
+        state.error = null
         state.payoutRequests = action.payload
       })
       .addCase(fetchPayoutRequests.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.loadingStates.fetchingPayoutRequests = false
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'fetchPayoutRequests', error, error.endpoint)
       })
       // Create payout request
+      .addCase(createPayoutRequest.pending, (state) => {
+        if (!state.isRetrying) {
+          state.error = null
+        }
+      })
       .addCase(createPayoutRequest.fulfilled, (state, action) => {
+        state.isRetrying = false
+        state.error = null
         state.payoutRequests.unshift(action.payload)
       })
       .addCase(createPayoutRequest.rejected, (state, action) => {
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'createPayoutRequest', error, error.endpoint)
       })
       // Fetch balance
       .addCase(fetchBalance.pending, (state) => {
+        state.loadingStates.fetchingBalance = true
         state.isLoading = true
-        state.error = null
+        if (!state.isRetrying) {
+          state.error = null
+        }
       })
       .addCase(fetchBalance.fulfilled, (state, action) => {
+        state.loadingStates.fetchingBalance = false
         state.isLoading = false
-        console.log('Balance fetched:', action.payload) // Debug log
+        state.isRetrying = false
+        state.error = null
         state.availableBalance = action.payload.availableBalance || 0
         state.pendingBalance = action.payload.pendingBalance || 0
       })
       .addCase(fetchBalance.rejected, (state, action) => {
+        state.loadingStates.fetchingBalance = false
         state.isLoading = false
-        state.error = action.payload as string
-        console.error('Balance fetch failed:', action.payload) // Debug log
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'fetchBalance', error, error.endpoint)
       })
       // Fetch commission analytics
       .addCase(fetchCommissionAnalytics.pending, (state) => {
+        state.loadingStates.fetchingAnalytics = true
         state.isLoading = true
-        state.error = null
+        if (!state.isRetrying) {
+          state.error = null
+        }
       })
       .addCase(fetchCommissionAnalytics.fulfilled, (state, action) => {
+        state.loadingStates.fetchingAnalytics = false
         state.isLoading = false
+        state.isRetrying = false
+        state.error = null
         state.analytics = action.payload
       })
       .addCase(fetchCommissionAnalytics.rejected, (state, action) => {
+        state.loadingStates.fetchingAnalytics = false
         state.isLoading = false
-        state.error = action.payload as string
+        state.isRetrying = false
+        const error = action.payload as CommissionError
+        state.error = error
+        ReduxErrorLogger.logSliceError('commission', 'fetchCommissionAnalytics', error, error.endpoint)
       })
   },
 })
 
-export const { clearError, setFilters, clearFilters, setCurrentPage } = commissionSlice.actions
+export const { clearError, setFilters, clearFilters, setCurrentPage, setRetrying, incrementRetryCount } = commissionSlice.actions
 export default commissionSlice.reducer

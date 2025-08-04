@@ -16,23 +16,12 @@ export interface CommissionClawbackRequest {
 
 class CommissionService extends ApiService {
   constructor() {
-    super('/commissions')
+    super() // Don't set a base URL since we need to call different endpoints
   }
 
   async getCommissions(filters?: CommissionFilters, page: number = 1, limit: number = 10): Promise<PaginatedResponse<Commission>> {
-    // Use the new marketer commission details endpoint
-    const response = await fetch('/api/v1/marketer/commission-details', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch commissions')
-    }
-    
-    const result = await response.json()
+    // Use the enhanced ApiService to fetch commission details from the correct endpoint
+    const result = await this.request<any>('GET', '/commission-details', undefined, { baseURL: '/api/v1/marketer' })
     
     // Transform the data to match the expected format
     const rawCommissions = result.data || []
@@ -89,19 +78,8 @@ class CommissionService extends ApiService {
   }
 
   async getCommissionSummary(): Promise<CommissionSummary> {
-    // Use the new marketer dashboard endpoint
-    const response = await fetch('/api/v1/marketer/dashboard', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch commission summary')
-    }
-    
-    const result = await response.json()
+    // Use the enhanced ApiService to fetch dashboard data from the correct endpoint
+    const result = await this.request<any>('GET', '/dashboard', undefined, { baseURL: '/api/v1/marketer' })
     
     // Transform the commission summary data to match expected format
     const commissionSummary = result.data?.commissionSummary || {}
@@ -121,43 +99,32 @@ class CommissionService extends ApiService {
   }
 
   async calculateCommission(data: CommissionCalculationRequest): Promise<Commission> {
-    return this.post<Commission>('/calculate', data)
+    return this.request<Commission>('POST', '/calculate', data, { baseURL: '/api/v1/commissions' })
   }
 
   async approveCommission(commissionId: string): Promise<Commission> {
-    return this.put<Commission>(`/${commissionId}/approve`)
+    return this.request<Commission>('PUT', `/${commissionId}/approve`, undefined, { baseURL: '/api/v1/commissions' })
   }
 
   async rejectCommission(commissionId: string, reason: string): Promise<Commission> {
-    return this.put<Commission>(`/${commissionId}/reject`, { reason })
+    return this.request<Commission>('PUT', `/${commissionId}/reject`, { reason }, { baseURL: '/api/v1/commissions' })
   }
 
   async processClawback(data: CommissionClawbackRequest): Promise<void> {
-    return this.post<void>('/clawback', data)
+    return this.request<void>('POST', '/clawback', data, { baseURL: '/api/v1/commissions' })
   }
 
   async getCommissionDetails(commissionId: string): Promise<Commission> {
-    return this.get<Commission>(`/${commissionId}`)
+    return this.request<Commission>('GET', `/${commissionId}`, undefined, { baseURL: '/api/v1/commissions' })
   }
 
   async updateCommissionStatus(commissionId: string, status: Commission['status']): Promise<Commission> {
-    return this.put<Commission>(`/${commissionId}/status`, { status })
+    return this.request<Commission>('PUT', `/${commissionId}/status`, { status }, { baseURL: '/api/v1/commissions' })
   }
 
   async getCommissionAnalytics(): Promise<any> {
-    // Get commission details first
-    const response = await fetch('/api/v1/marketer/commission-details', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch commission analytics')
-    }
-    
-    const result = await response.json()
+    // Use the enhanced ApiService to fetch commission details from the correct endpoint
+    const result = await this.request<any>('GET', '/commission-details', undefined, { baseURL: '/api/v1/marketer' })
     const commissions = result.data || []
     
     // Calculate analytics from commission data

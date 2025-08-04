@@ -55,7 +55,7 @@ export const PayoutsPage: React.FC = () => {
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+                <div className="mt-2 text-sm text-red-700">{error.message}</div>
               </div>
             </div>
           </div>
