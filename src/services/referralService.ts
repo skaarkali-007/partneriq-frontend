@@ -1,4 +1,5 @@
 import { ApiService } from './api'
+import api from './api'
 import { ReferralLink, CustomerReferral, ReferralStats, ReferralFilters } from '../types/api'
 
 export interface CreateReferralLinkRequest {
@@ -52,15 +53,14 @@ class ReferralService extends ApiService {
       queryParams.append('source', filters.source)
     }
 
-    // Use the enhanced ApiService with proper error handling
-    const response = await this.request<CustomerReferralsResponse>(
-      'GET',
-      `/marketer/${marketerId}/customers?${queryParams}`,
-      undefined,
-      { baseURL: '/api/v1' } // Override base URL for this specific call
-    )
-    
-    return response.referrals || []
+    // Use the default axios instance directly to bypass ApiService URL construction issues
+    try {
+      const response = await api.get(`/marketer/${marketerId}/customers?${queryParams}`)
+      return response.data?.data?.referrals || []
+    } catch (error) {
+      console.error('Error fetching customer referrals:', error)
+      throw error
+    }
   }
 
   async getReferralStats(marketerId: string): Promise<ReferralStats> {

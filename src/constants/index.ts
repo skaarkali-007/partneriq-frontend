@@ -255,3 +255,6 @@ export const ERROR_CODES = {
   VALIDATION_ERROR: 422,
   SERVER_ERROR: 500,
 } as const
+
+// Re-export brand constants
+export * from './brand';

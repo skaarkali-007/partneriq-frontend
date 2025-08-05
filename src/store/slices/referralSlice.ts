@@ -225,7 +225,7 @@ export const fetchCustomerReferrals = createAsyncThunk(
       const referrals = await referralService.getCustomerReferrals(marketerId, filters)
       return referrals
     } catch (error: any) {
-      return rejectWithValue(createReferralError(error, '/customer-referrals'))
+      return rejectWithValue(createReferralError(error, `/marketer/${marketerId}/customers`))
     }
   }
 )

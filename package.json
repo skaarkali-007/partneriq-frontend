@@ -1,7 +1,7 @@
 {
-  "name": "financial-affiliate-frontend",
+  "name": "partner-iq-frontend",
   "version": "1.0.0",
-  "description": "Financial affiliate platform frontend",
+  "description": "Partner IQ platform frontend",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.2.0",

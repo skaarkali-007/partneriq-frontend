@@ -139,7 +139,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Financial Affiliate Platform</h1>
+              <img src="/partner-iq-logo.svg" alt="Partner IQ" width="200" height="53" />
             </div>
             <div className="text-sm text-gray-500">
               Referred by: {marketer.firstName} {marketer.lastName}
@@ -239,7 +239,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-gray-400">
-              © 2024 Financial Affiliate Platform. All rights reserved.
+              © 2024 Partner IQ. All rights reserved.
             </p>
             <div className="mt-2 space-x-4">
               <a href="/privacy" className="text-gray-400 hover:text-white text-sm">Privacy Policy</a>

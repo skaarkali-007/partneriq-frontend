@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminLayout } from './components/admin/AdminLayout'
 import { HomePage } from './pages/HomePage'
+import { FeaturesPage } from './pages/FeaturesPage'
+import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -10,6 +12,7 @@ import { CommissionsPage } from './pages/CommissionsPage'
 import { PayoutsPage } from './pages/PayoutsPage'
 import { CustomerOnboardingPage } from './pages/CustomerOnboardingPage'
 import { LandingPage } from './pages/LandingPage'
+import { AdminLoginPage } from './pages/admin/AdminLoginPage'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
 import { UserManagementPage } from './pages/admin/UserManagementPage'
 import { CustomerApplicationsPage } from './pages/admin/CustomerApplicationsPage'
@@ -27,7 +30,10 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/about" element={<AboutPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-otp" element={<OTPVerificationPage />} />
       <Route path="/mfa-setup" element={<MFASetupPage />} />

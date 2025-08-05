@@ -2,9 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Partner IQ Brand Colors */
+  --brand-primary: #2563EB;
+  --brand-secondary: #1E40AF;
+  --brand-accent: #6B7280;
+  --brand-white: #FFFFFF;
+  --brand-dark: #1F2937;
+  
+  /* Neutral Colors */
+  --brand-neutral-50: #F9FAFB;
+  --brand-neutral-100: #F3F4F6;
+  --brand-neutral-200: #E5E7EB;
+  --brand-neutral-300: #D1D5DB;
+  --brand-neutral-400: #9CA3AF;
+  --brand-neutral-500: #6B7280;
+  --brand-neutral-600: #4B5563;
+  --brand-neutral-700: #374151;
+  --brand-neutral-800: #1F2937;
+  --brand-neutral-900: #111827;
+  
+  /* Typography */
+  --brand-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--brand-font-family);
   }
 }
 

@@ -5,7 +5,7 @@ import { vi } from 'vitest'
 Object.defineProperty(import.meta, 'env', {
   value: {
     VITE_API_BASE_URL: 'http://localhost:3003/api/v1',
-    VITE_APP_NAME: 'Financial Affiliate Platform',
+    VITE_APP_NAME: 'Partner IQ',
     VITE_APP_VERSION: '1.0.0',
     VITE_ENABLE_MFA: 'true',
     VITE_ENABLE_ANALYTICS: 'true',

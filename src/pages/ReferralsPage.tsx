@@ -14,7 +14,6 @@ import {
   fetchCustomerReferrals, 
   fetchReferralStats,
   setFilters,
-  toggleRealTime,
   createReferralLink,
   clearError,
   setRetrying,
@@ -39,7 +38,6 @@ export const ReferralsPage: React.FC = () => {
     isLoading, 
     isRetrying,
     error,
-    realTimeEnabled,
     stats
   } = useSelector((state: RootState) => state.referral)
 
@@ -81,20 +79,7 @@ export const ReferralsPage: React.FC = () => {
     initializeData()
   }, [dispatch, user?.id])
 
-  // Real-time updates - refresh data periodically
-  useEffect(() => {
-    if (!realTimeEnabled) return
 
-    const interval = setInterval(() => {
-      // Refresh real data from backend
-      if (user?.id) {
-        dispatch(fetchCustomerReferrals({ marketerId: user.id, filters: reduxFilters }))
-        dispatch(fetchReferralStats(user.id))
-      }
-    }, 30000) // Refresh every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [realTimeEnabled, dispatch, user?.id, reduxFilters])
 
   const handleCreateReferralLink = useCallback(async (productId: string) => {
     try {
@@ -124,9 +109,7 @@ export const ReferralsPage: React.FC = () => {
     }
   }, [dispatch, reduxFilters, user?.id])
 
-  const handleToggleRealTime = useCallback(() => {
-    dispatch(toggleRealTime())
-  }, [dispatch])
+
 
   const handleClearError = useCallback(() => {
     dispatch(clearError())
@@ -298,29 +281,7 @@ export const ReferralsPage: React.FC = () => {
               }}
             />
             
-            {/* Real-time Toggle */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">Real-time updates</span>
-              <button
-                onClick={handleToggleRealTime}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  realTimeEnabled ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
-                title={realTimeEnabled ? 'Disable real-time updates' : 'Enable real-time updates'}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    realTimeEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              {realTimeEnabled && (
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-600">Live</span>
-                </div>
-              )}
-            </div>
+
             
             {/* Export Button */}
             <button

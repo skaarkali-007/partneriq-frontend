@@ -267,8 +267,8 @@ export const RegisterPage: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700">
-            Financial Affiliate Platform
+          <Link to="/" className="flex justify-center hover:opacity-80 transition-opacity">
+            <img src="/partner-iq-logo.svg" alt="Partner IQ" width="200" height="53" />
           </Link>
           <p className="mt-2 text-sm text-gray-600">
             Already have an account?{' '}

@@ -353,15 +353,24 @@ export const CommissionManagementPage: React.FC = () => {
                 <td className="px-6 py-4">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {commission.marketerId.firstName} {commission.marketerId.lastName}
+                      {commission.marketerId ? 
+                        `${commission.marketerId.firstName} ${commission.marketerId.lastName}` : 
+                        'Unknown Marketer'
+                      }
                     </div>
-                    <div className="text-sm text-gray-500">{commission.marketerId.email}</div>
+                    <div className="text-sm text-gray-500">
+                      {commission.marketerId?.email || 'No email'}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{commission.productId.name}</div>
-                    <div className="text-sm text-gray-500 capitalize">{commission.productId.category}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {commission.productId?.name || 'Unknown Product'}
+                    </div>
+                    <div className="text-sm text-gray-500 capitalize">
+                      {commission.productId?.category || 'Unknown Category'}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">

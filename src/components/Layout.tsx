@@ -25,8 +25,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="text-xl font-semibold text-gray-900 hover:text-gray-700">
-              Financial Affiliate Platform
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <img src="/partner-iq-logo.svg" alt="Partner IQ" width="160" height="42" />
             </Link>
             
             <nav className="flex items-center space-x-4">
