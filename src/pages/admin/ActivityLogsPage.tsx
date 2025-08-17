@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
+import { apiRequest } from '../../utils/apiConfig'
 
 interface AuditLog {
   _id: string
@@ -120,10 +121,9 @@ export const ActivityLogsPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await fetch(`/api/v1/admin/activity-logs?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/activity-logs?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -152,7 +152,7 @@ export const ActivityLogsPage: React.FC = () => {
         }
       })
 
-      const response = await fetch(`/api/v1/admin/activity-logs/export?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/activity-logs/export?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }

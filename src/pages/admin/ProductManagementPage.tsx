@@ -6,6 +6,7 @@ import {
   TrashIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
+import { apiRequest } from '../../utils/apiConfig'
 
 interface Product {
   _id: string
@@ -83,10 +84,9 @@ export const ProductManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await fetch(`/api/v1/admin/products?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/products?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -107,11 +107,10 @@ export const ProductManagementPage: React.FC = () => {
   const createProduct = async (productData: Partial<Product>) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/v1/admin/products', {
+      const response = await apiRequest('/api/v1/admin/products', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify(productData)
       })
@@ -130,11 +129,10 @@ export const ProductManagementPage: React.FC = () => {
   const updateProduct = async (productId: string, productData: Partial<Product>) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/v1/admin/products/${productId}`, {
+      const response = await apiRequest(`/api/v1/admin/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify(productData)
       })
@@ -157,11 +155,10 @@ export const ProductManagementPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/v1/admin/products/${productId}`, {
+      const response = await apiRequest(`/api/v1/admin/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -655,10 +652,9 @@ const ProductPerformanceModal: React.FC<{
   const fetchPerformance = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/v1/admin/products/${productId}/performance`, {
+      const response = await apiRequest(`/api/v1/admin/products/${productId}/performance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 

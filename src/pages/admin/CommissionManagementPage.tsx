@@ -5,6 +5,7 @@ import {
   ExclamationTriangleIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
+import { apiRequest } from '../../utils/apiConfig'
 
 interface Commission {
   _id: string
@@ -93,10 +94,9 @@ export const CommissionManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await fetch(`/api/v1/admin/commissions?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/commissions?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -117,11 +117,10 @@ export const CommissionManagementPage: React.FC = () => {
   const updateCommissionStatus = async (commissionId: string, status: string, reason?: string) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/v1/admin/commissions/${commissionId}/status`, {
+      const response = await apiRequest(`/api/v1/admin/commissions/${commissionId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status, reason })
       })
@@ -144,11 +143,10 @@ export const CommissionManagementPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/v1/admin/commissions/bulk-update', {
+      const response = await apiRequest('/api/v1/admin/commissions/bulk-update', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
           commissionIds: selectedCommissions, 

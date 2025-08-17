@@ -7,6 +7,7 @@ import {
   ArrowDownTrayIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
+import { apiRequest } from '../../utils/apiConfig'
 
 interface Payout {
   _id: string
@@ -119,10 +120,9 @@ export const PayoutManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await fetch(`/api/v1/admin/payouts?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/payouts?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -147,10 +147,9 @@ export const PayoutManagementPage: React.FC = () => {
       if (filters.startDate) queryParams.append('startDate', filters.startDate)
       if (filters.endDate) queryParams.append('endDate', filters.endDate)
 
-      const response = await fetch(`/api/v1/admin/payouts/stats?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/payouts/stats?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       })
 
@@ -168,11 +167,10 @@ export const PayoutManagementPage: React.FC = () => {
   const updatePayoutStatus = async (payoutId: string, status: string, reason?: string, transactionId?: string) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/v1/admin/payouts/${payoutId}/status`, {
+      const response = await apiRequest(`/api/v1/admin/payouts/${payoutId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status, reason, transactionId })
       })
@@ -195,11 +193,10 @@ export const PayoutManagementPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/v1/admin/payouts/bulk-process', {
+      const response = await apiRequest('/api/v1/admin/payouts/bulk-process', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
           payoutIds: selectedPayouts, 
@@ -228,7 +225,7 @@ export const PayoutManagementPage: React.FC = () => {
       if (filters.endDate) queryParams.append('endDate', filters.endDate)
       if (filters.status) queryParams.append('status', filters.status)
 
-      const response = await fetch(`/api/v1/admin/payouts/export?${queryParams}`, {
+      const response = await apiRequest(`/api/v1/admin/payouts/export?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
