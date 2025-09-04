@@ -30,16 +30,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />
   }
 
-  // Check role-based access
+  // Check role-based access and redirect to appropriate dashboard
   if (requiredRole && user?.role !== requiredRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
-        </div>
-      </div>
-    )
+    // Redirect to the appropriate dashboard based on user role
+    if (user?.role === 'admin') {
+      return <Navigate to="/admin" replace />
+    } else if (user?.role === 'marketer') {
+      return <Navigate to="/dashboard" replace />
+    } else {
+      // Fallback for unknown roles
+      return <Navigate to="/login" replace />
+    }
   }
 
   // Check if user account is suspended or revoked

@@ -47,7 +47,7 @@ export const AccountPage: React.FC = () => {
   })
 
   // KYC state
-  const [kycStatus] = useState<KYCStatus>({
+  const [kycStatus, setKycStatus] = useState<KYCStatus>({
     status: 'not_submitted'
   })
 
@@ -58,7 +58,54 @@ export const AccountPage: React.FC = () => {
   const loadAccountData = async () => {
     try {
       setIsLoading(true)
-      // TODO: Load account data from API
+      
+      // Fetch user profile data including KYC status
+      const response = await fetch('/api/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          const profile = result.data
+          
+          // Update profile data
+          setProfileData(prev => ({
+            ...prev,
+            firstName: profile.firstName || prev.firstName,
+            lastName: profile.lastName || prev.lastName,
+            phoneNumber: profile.phone || '',
+            address: profile.address ? {
+              street: profile.address.street || '',
+              city: profile.address.city || '',
+              state: profile.address.state || '',
+              zipCode: profile.address.postalCode || '',
+              country: profile.address.country || 'US'
+            } : prev.address
+          }))
+          
+          // Update KYC status
+          setKycStatus({
+            status: profile.kycStatus === 'pending' ? 'not_submitted' : 
+                   profile.kycStatus === 'in_review' ? 'pending' :
+                   profile.kycStatus === 'approved' ? 'approved' : 
+                   profile.kycStatus === 'rejected' ? 'rejected' : 'not_submitted',
+            submittedAt: profile.kycSubmittedAt,
+            reviewedAt: profile.kycApprovedAt || profile.kycRejectedAt,
+            rejectionReason: profile.kycRejectionReason
+          })
+        }
+      } else if (response.status === 404) {
+        // Profile doesn't exist yet, which is fine for new users
+        console.log('Profile not found - user may need to complete onboarding')
+      } else {
+        console.error('Failed to load profile data:', response.statusText)
+        toast.error('Failed to load account information')
+      }
     } catch (error) {
       console.error('Failed to load account data:', error)
       toast.error('Failed to load account information')

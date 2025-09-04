@@ -99,13 +99,7 @@ export const ReferralTrackingTable: React.FC<ReferralTrackingTableProps> = ({
             lastActivityAt: new Date().toISOString(),
           }))
           
-          // Show browser notification if supported
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('New Conversion!', {
-              body: `${randomReferral.customerEmail} just converted on ${randomReferral.productName}`,
-              icon: '/favicon.ico'
-            })
-          }
+
         }
       }
     }

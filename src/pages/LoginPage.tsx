@@ -19,10 +19,10 @@ export const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { isLoading, error, isAuthenticated } = useSelector((state: RootState) => state.auth)
+  const { isLoading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth)
   const [showPassword, setShowPassword] = useState(false)
 
-  const from = location.state?.from?.pathname || '/dashboard'
+  const from = location.state?.from?.pathname
 
   const {
     register,
@@ -33,10 +33,32 @@ export const LoginPage: React.FC = () => {
   })
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true })
+    if (isAuthenticated && user) {
+      // Determine the appropriate dashboard based on user role
+      let redirectPath = from
+      
+      if (!redirectPath) {
+        // No specific redirect path, use role-based default
+        redirectPath = user.role === 'admin' ? '/admin' : '/dashboard'
+      } else {
+        // Check if the redirect path is appropriate for the user's role
+        const isAdminPath = redirectPath.startsWith('/admin')
+        const isMarketerPath = redirectPath.startsWith('/dashboard') || 
+                              redirectPath.startsWith('/referrals') || 
+                              redirectPath.startsWith('/commissions') || 
+                              redirectPath.startsWith('/payouts') || 
+                              redirectPath.startsWith('/account')
+        
+        if (user.role === 'admin' && !isAdminPath) {
+          redirectPath = '/admin'
+        } else if (user.role === 'marketer' && !isMarketerPath) {
+          redirectPath = '/dashboard'
+        }
+      }
+      
+      navigate(redirectPath, { replace: true })
     }
-  }, [isAuthenticated, navigate, from])
+  }, [isAuthenticated, user, navigate, from])
 
   useEffect(() => {
     if (error) {

@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { QRCodeSVG } from 'qrcode.react'
 import { mfaService } from '../services/mfaService'
+import { useAuth } from '../contexts/AuthContext'
 
 export const MFASetupPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuth()
   const isSkipable = location.state?.skipable || false
   
   const [step, setStep] = useState<'intro' | 'setup' | 'verify'>('intro')
@@ -16,10 +18,17 @@ export const MFASetupPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [backupCodes, setBackupCodes] = useState<string[]>([])
 
-  // Check KYC status to determine next step
+  // Check user role and KYC status to determine next step
   const checkKYCStatusAndNavigate = async () => {
+    // If user is admin, redirect directly to admin dashboard
+    if (user?.role === 'admin') {
+      toast.success('Welcome to the admin dashboard!')
+      navigate('/admin')
+      return
+    }
+    
+    // For marketers, check KYC status
     try {
-      // Check if user has completed KYC
       const response = await fetch(`${import.meta.env.VITE_API_URL}/profile/kyc/status`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -29,7 +38,7 @@ export const MFASetupPage: React.FC = () => {
       if (response.ok) {
         const kycData = await response.json()
         
-        // If KYC is already completed, go to dashboard
+        // If KYC is already completed, go to marketer dashboard
         if (kycData.status === 'approved' || kycData.status === 'completed') {
           toast.success('Welcome! Your account is fully verified.')
           navigate('/dashboard')
@@ -38,12 +47,13 @@ export const MFASetupPage: React.FC = () => {
           navigate('/kyc-verification')
         }
       } else {
-        // If can't check status, assume KYC needed
+        // If can't check KYC status, assume KYC needed for marketers
         navigate('/kyc-verification')
       }
     } catch (error) {
-      // If error checking status, assume KYC needed
-      navigate('/kyc-verification')
+      // If error checking KYC status, default to marketer dashboard
+      toast.success('Welcome to your dashboard!')
+      navigate('/dashboard')
     }
   }
 

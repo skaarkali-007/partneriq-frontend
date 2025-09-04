@@ -98,8 +98,13 @@ export const AdminLoginPage: React.FC = () => {
       localStorage.removeItem('adminLoginLockout')
       navigate(from, { replace: true })
     } else if (isAuthenticated && user?.role !== 'admin') {
-      toast.error('Access denied. Admin privileges required.')
-      dispatch(clearError())
+      // Redirect non-admin users to their appropriate dashboard
+      if (user?.role === 'marketer') {
+        navigate('/dashboard', { replace: true })
+      } else {
+        toast.error('Access denied. Admin privileges required.')
+        dispatch(clearError())
+      }
     }
   }, [isAuthenticated, user, navigate, from, dispatch])
 

@@ -7,7 +7,7 @@ import { ReferralLinkGenerator } from '../components/referrals/ReferralLinkGener
 import { ReferralTrackingTable } from '../components/referrals/ReferralTrackingTable'
 import { ReferralFilters } from '../components/referrals/ReferralFilters'
 import { ReferralAnalytics } from '../components/referrals/ReferralAnalytics'
-import { ReferralNotifications } from '../components/referrals/ReferralNotifications'
+
 import { ErrorDisplay } from '../components/common/ErrorDisplay'
 import { 
   fetchReferralLinks, 
@@ -50,16 +50,7 @@ export const ReferralsPage: React.FC = () => {
     dateTo: '',
   })
 
-  // Request notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          console.log('Notification permission granted')
-        }
-      })
-    }
-  }, [])
+
 
   // Initialize data on component mount
   useEffect(() => {
@@ -269,20 +260,6 @@ export const ReferralsPage: React.FC = () => {
           
           {/* Controls */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <ReferralNotifications
-              onNotificationClick={(notification) => {
-                // Handle notification click - could scroll to specific referral or show details
-                console.log('Notification clicked:', notification)
-                if (notification.referralId) {
-                  // In a real implementation, this could highlight the specific referral
-                  // or open a modal with details
-                }
-              }}
-            />
-            
-
-            
             {/* Export Button */}
             <button
               onClick={handleExportData}

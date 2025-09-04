@@ -100,6 +100,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                         ? 'bg-blue-100 text-blue-900'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
+                    onClick={() => setSidebarOpen(false)}
                   >
                     <IconComponent
                       name={item.icon}
@@ -112,6 +113,43 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 )
               })}
             </nav>
+          </div>
+          
+          {/* Mobile User Profile Section */}
+          <div className="flex-shrink-0 border-t border-gray-200">
+            <div className="p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.profile?.firstName?.[0] || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-base font-medium text-gray-700">
+                    {user?.profile?.firstName} {user?.profile?.lastName}
+                  </p>
+                  <p className="text-sm text-gray-500">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Sign Out Button */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setSidebarOpen(false)
+                }}
+                className="w-full flex items-center justify-center px-4 py-2 text-base font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
