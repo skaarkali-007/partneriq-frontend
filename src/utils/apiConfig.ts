@@ -34,7 +34,7 @@ export const createApiUrl = (endpoint: string): string => {
 }
 
 // Helper function for making API requests with proper base URL
-export const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<Response> => {
+export const apiRequest = async (endpoint: string, options: any = {}): Promise<Response> => {
   const url = endpoint.startsWith('http') ? endpoint : createApiUrl(endpoint)
   
   return fetch(url, {

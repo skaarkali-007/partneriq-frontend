@@ -46,8 +46,9 @@ export const CommissionSummaryCard: React.FC<CommissionSummaryCardProps> = ({ da
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">Commission Summary</dt>
-              <dd className="text-lg font-medium text-gray-900">{formatCurrency(data.totalEarnings)}</dd>
+              <dt className="text-sm font-medium text-gray-500 truncate">Total Earnings</dt>
+              <dd className="text-2xl font-bold text-gray-900">{formatCurrency(data.totalEarnings)}</dd>
+              <dd className="text-sm text-gray-500">{data.totalCommissions || 0} total commissions</dd>
             </dl>
           </div>
         </div>
@@ -55,20 +56,32 @@ export const CommissionSummaryCard: React.FC<CommissionSummaryCardProps> = ({ da
       <div className="bg-gray-50 px-5 py-3">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="font-medium text-gray-500">Available Balance</dt>
-            <dd className="text-gray-900 font-semibold">{formatCurrency(data.availableBalance)}</dd>
+            <dt className="font-medium text-gray-500">Paid</dt>
+            <dd className="text-green-600 font-semibold">{formatCurrency(data.paidCommissions || 0)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-gray-500">Approved</dt>
+            <dd className="text-blue-600 font-semibold">{formatCurrency(data.approvedCommissions || 0)}</dd>
           </div>
           <div>
             <dt className="font-medium text-gray-500">Pending</dt>
-            <dd className="text-gray-900 font-semibold">{formatCurrency(data.pendingCommissions)}</dd>
+            <dd className="text-yellow-600 font-semibold">{formatCurrency(data.pendingCommissions)}</dd>
           </div>
           <div>
-            <dt className="font-medium text-gray-500">This Month</dt>
-            <dd className="text-gray-900 font-semibold">{formatCurrency(data.thisMonthEarnings)}</dd>
+            <dt className="font-medium text-gray-500">Clawed Back</dt>
+            <dd className="text-red-600 font-semibold">{formatCurrency(data.clawedBackAmount || 0)}</dd>
           </div>
-          <div>
-            <dt className="font-medium text-gray-500">Conversion Rate</dt>
-            <dd className="text-gray-900 font-semibold">{formatPercentage(data.conversionRate)}</dd>
+        </div>
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="font-medium text-gray-500">This Month</dt>
+              <dd className="text-gray-900 font-semibold">{formatCurrency(data.thisMonthEarnings)}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-gray-500">Conversion Rate</dt>
+              <dd className="text-gray-900 font-semibold">{formatPercentage(data.conversionRate / 100)}</dd>
+            </div>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline'
 import { apiRequest } from '../../utils/apiConfig'
-
+import  api  from '../../services/api'
 interface Product {
   _id: string
   name: string
@@ -84,17 +84,17 @@ export const ProductManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await apiRequest(`/api/v1/admin/products?${queryParams}`, {
+      const response = await api.get(`/admin/products?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch products')
       }
 
-      const data: { data: ProductListResponse } = await response.json()
+      const data: { data: ProductListResponse } = response.data || response.data.data
       setProducts(data.data.products)
       setPagination(data.data.pagination)
     } catch (err: any) {
@@ -104,41 +104,41 @@ export const ProductManagementPage: React.FC = () => {
     }
   }
 
-  const createProduct = async (productData: Partial<Product>) => {
+  const createProduct = async (productData: any) => {
     try {
+      console.log('Creating product with data:', productData)
       const token = localStorage.getItem('token')
-      const response = await apiRequest('/api/v1/admin/products', {
-        method: 'POST',
+      const response = await api.post('/admin/products', productData, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(productData)
       })
 
-      if (!response.ok) {
+      if(!response.data.data || !response.data){
         throw new Error('Failed to create product')
       }
 
+
+      const result = response.data.data || response.data
+      console.log('Product created successfully:', result)
       fetchProducts()
       setShowCreateModal(false)
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      console.error('Product creation error:', err)
+      alert(`Error creating product: ${err.message}`)
     }
   }
 
   const updateProduct = async (productId: string, productData: Partial<Product>) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest(`/api/v1/admin/products/${productId}`, {
-        method: 'PUT',
+      const response = await api.put(`/admin/products/${productId}`, productData, {
         headers: {
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(productData)
+        }
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to update product')
+      if(!response.data.data || !response.data){
+        throw new Error('Failed to updating product')
       }
 
       fetchProducts()
@@ -155,14 +155,13 @@ export const ProductManagementPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest(`/api/v1/admin/products/${productId}`, {
-        method: 'DELETE',
+      const response = await api.delete(`/admin/products/${productId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if(!response.data){
         throw new Error('Failed to delete product')
       }
 
@@ -652,17 +651,17 @@ const ProductPerformanceModal: React.FC<{
   const fetchPerformance = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest(`/api/v1/admin/products/${productId}/performance`, {
+      const response = await api.get(`/admin/products/${productId}/performance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch performance data')
       }
 
-      const data = await response.json()
+      const data = response.data || response.data.data
       setPerformance(data.data)
     } catch (err) {
       console.error('Error fetching performance:', err)

@@ -7,6 +7,7 @@ import { AppDispatch } from '../../store'
 import { addPaymentMethod, updatePaymentMethod, deletePaymentMethod } from '../../store/slices/commissionSlice'
 import { PaymentMethod } from '../../types/api'
 import toast from 'react-hot-toast'
+import { Bitcoin } from 'lucide-react'
 
 interface PaymentMethodManagerProps {
   paymentMethods: PaymentMethod[]
@@ -87,7 +88,7 @@ export const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({
   const cryptoForm = useForm<CryptoWalletFormData>({
     resolver: yupResolver(cryptoWalletSchema),
     defaultValues: {
-      methodType: 'bitcoin',
+      methodType:  "bitcoin", 
       isDefault: false,
     },
   })
@@ -574,7 +575,7 @@ export const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({
                 </div>
               </button>
 
-              <button
+              {/* <button
                 onClick={() => setSelectedMethodType('ethereum')}
                 className={`p-4 border-2 rounded-lg text-left ${
                   selectedMethodType === 'ethereum'
@@ -629,7 +630,7 @@ export const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({
                     <p className="text-xs text-gray-500">Tether USD</p>
                   </div>
                 </div>
-              </button>
+              </button> */}
             </div>
           </div>
 

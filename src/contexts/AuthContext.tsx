@@ -22,10 +22,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // If we have a token but no user data, fetch the user profile
-    if (token && !user && isAuthenticated) {
+    if (token && !user && isAuthenticated && !isLoading) {
       dispatch(fetchUserProfile())
     }
-  }, [dispatch, token, user, isAuthenticated])
+  }, [dispatch, token, user, isAuthenticated, isLoading])
 
   useEffect(() => {
     // Set up token refresh interval

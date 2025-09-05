@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '../store'
 import { DashboardLayout } from '../components/dashboard/DashboardLayout'
 import toast from 'react-hot-toast'
+import api from '../services/api'
 
 interface ProfileData {
   firstName: string
@@ -60,16 +61,15 @@ export const AccountPage: React.FC = () => {
       setIsLoading(true)
       
       // Fetch user profile data including KYC status
-      const response = await fetch('/api/profile', {
-        method: 'GET',
+      const response = await api.get('/profile', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
           'Content-Type': 'application/json'
         }
       })
 
-      if (response.ok) {
-        const result = await response.json()
+      if (response.data || response.data.data) {
+        const result = response.data || response.data.data
         if (result.success && result.data) {
           const profile = result.data
           

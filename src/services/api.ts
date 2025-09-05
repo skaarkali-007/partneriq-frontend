@@ -532,7 +532,23 @@ export class ApiService {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const endpoint = `${this.baseUrl}${url}`
+    // Handle baseURL override in config
+    let endpoint: string
+    let requestConfig: AxiosRequestConfig
+    
+    if (config?.baseURL) {
+      // If baseURL is provided in config, construct full URL
+      const fullBaseUrl = config.baseURL.startsWith('http') 
+        ? config.baseURL 
+        : `${API_BASE_URL.replace('/api/v1', '')}${config.baseURL}`
+      endpoint = `${fullBaseUrl}${url}`
+      requestConfig = { ...config }
+      delete requestConfig.baseURL // Remove baseURL from config since we're using full URL
+    } else {
+      endpoint = `${this.baseUrl}${url}`
+      requestConfig = config || {}
+    }
+    
     let lastError: any
 
     for (let attempt = 1; attempt <= this.retryConfig.maxRetries + 1; attempt++) {
@@ -550,7 +566,7 @@ export class ApiService {
           method,
           url: endpoint,
           data,
-          ...config,
+          ...requestConfig,
         })
 
         // Validate response content type

@@ -8,6 +8,7 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline'
 import { apiRequest } from '../../utils/apiConfig'
+import api from '../../services/api'
 
 interface Payout {
   _id: string
@@ -120,17 +121,17 @@ export const PayoutManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await apiRequest(`/api/v1/admin/payouts?${queryParams}`, {
+      const response = await api.get(`/admin/payouts?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch payouts')
       }
 
-      const data: { data: PayoutListResponse } = await response.json()
+      const data: { data: PayoutListResponse } = response.data || response.data.data
       setPayouts(data.data.payouts)
       setPagination(data.data.pagination)
     } catch (err: any) {
@@ -147,17 +148,17 @@ export const PayoutManagementPage: React.FC = () => {
       if (filters.startDate) queryParams.append('startDate', filters.startDate)
       if (filters.endDate) queryParams.append('endDate', filters.endDate)
 
-      const response = await apiRequest(`/api/v1/admin/payouts/stats?${queryParams}`, {
+      const response = await api.get(`/admin/payouts/stats?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch stats')
       }
 
-      const data = await response.json()
+      const data = await response.data || response.data.data
       setStats(data.data)
     } catch (err: any) {
       alert(`Error fetching stats: ${err.message}`)
@@ -167,15 +168,15 @@ export const PayoutManagementPage: React.FC = () => {
   const updatePayoutStatus = async (payoutId: string, status: string, reason?: string, transactionId?: string) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest(`/api/v1/admin/payouts/${payoutId}/status`, {
+      const body = { status, reason, transactionId }
+      const response = await api.put(`/admin/payouts/${payoutId}/status`, body, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, reason, transactionId })
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to update payout status')
       }
 
@@ -193,19 +194,19 @@ export const PayoutManagementPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest('/api/v1/admin/payouts/bulk-process', {
+      const body = { 
+        payoutIds: selectedPayouts, 
+        action, 
+        reason 
+      }
+      const response = await api.post('/admin/payouts/bulk-process', body, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
-          payoutIds: selectedPayouts, 
-          action, 
-          reason 
-        })
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to perform bulk action')
       }
 
@@ -225,17 +226,18 @@ export const PayoutManagementPage: React.FC = () => {
       if (filters.endDate) queryParams.append('endDate', filters.endDate)
       if (filters.status) queryParams.append('status', filters.status)
 
-      const response = await apiRequest(`/api/v1/admin/payouts/export?${queryParams}`, {
+      const response = await api.get(`/admin/payouts/export?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+           responseType: "blob"
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to export report')
       }
 
-      const blob = await response.blob()
+      const blob = response.data || response.data.data
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

@@ -33,32 +33,37 @@ export const LoginPage: React.FC = () => {
   })
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Determine the appropriate dashboard based on user role
-      let redirectPath = from
-      
-      if (!redirectPath) {
-        // No specific redirect path, use role-based default
-        redirectPath = user.role === 'admin' ? '/admin' : '/dashboard'
-      } else {
-        // Check if the redirect path is appropriate for the user's role
-        const isAdminPath = redirectPath.startsWith('/admin')
-        const isMarketerPath = redirectPath.startsWith('/dashboard') || 
-                              redirectPath.startsWith('/referrals') || 
-                              redirectPath.startsWith('/commissions') || 
-                              redirectPath.startsWith('/payouts') || 
-                              redirectPath.startsWith('/account')
+    if (isAuthenticated && user && !isLoading) {
+      // Small delay to ensure state is fully updated
+      const timer = setTimeout(() => {
+        // Determine the appropriate dashboard based on user role
+        let redirectPath = from
         
-        if (user.role === 'admin' && !isAdminPath) {
-          redirectPath = '/admin'
-        } else if (user.role === 'marketer' && !isMarketerPath) {
-          redirectPath = '/dashboard'
+        if (!redirectPath) {
+          // No specific redirect path, use role-based default
+          redirectPath = user.role === 'admin' ? '/admin' : '/dashboard'
+        } else {
+          // Check if the redirect path is appropriate for the user's role
+          const isAdminPath = redirectPath.startsWith('/admin')
+          const isMarketerPath = redirectPath.startsWith('/dashboard') || 
+                                redirectPath.startsWith('/referrals') || 
+                                redirectPath.startsWith('/commissions') || 
+                                redirectPath.startsWith('/payouts') || 
+                                redirectPath.startsWith('/account')
+          
+          if (user.role === 'admin' && !isAdminPath) {
+            redirectPath = '/admin'
+          } else if (user.role === 'marketer' && !isMarketerPath) {
+            redirectPath = '/dashboard'
+          }
         }
-      }
+        
+        navigate(redirectPath, { replace: true })
+      }, 100) // Small delay to ensure state is fully updated
       
-      navigate(redirectPath, { replace: true })
+      return () => clearTimeout(timer)
     }
-  }, [isAuthenticated, user, navigate, from])
+  }, [isAuthenticated, user, isLoading, navigate, from])
 
   useEffect(() => {
     if (error) {
@@ -80,7 +85,8 @@ export const LoginPage: React.FC = () => {
         // Redirect to MFA setup for newly verified users
         navigate('/mfa-setup', { state: { skipable: true } })
       } else {
-        navigate(from, { replace: true })
+        // Let the useEffect handle navigation based on authentication state
+        // Don't navigate here to avoid race conditions
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Login failed'

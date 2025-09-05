@@ -6,6 +6,7 @@ import {
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import { apiRequest } from '../../utils/apiConfig'
+import api from '../../services/api'
 
 interface Commission {
   _id: string
@@ -94,17 +95,17 @@ export const CommissionManagementPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await apiRequest(`/api/v1/admin/commissions?${queryParams}`, {
+      const response = await api.get(`/admin/commissions?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch commissions')
       }
 
-      const data: { data: CommissionListResponse } = await response.json()
+      const data: { data: CommissionListResponse } = response.data || response.data.data
       setCommissions(data.data.commissions)
       setPagination(data.data.pagination)
     } catch (err: any) {
@@ -117,15 +118,17 @@ export const CommissionManagementPage: React.FC = () => {
   const updateCommissionStatus = async (commissionId: string, status: string, reason?: string) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest(`/api/v1/admin/commissions/${commissionId}/status`, {
-        method: 'PUT',
+      const body = {
+        status: status,
+        reason: reason
+      }
+      const response = await api.put(`/admin/commissions/${commissionId}/status`, body, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, reason })
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to update commission status')
       }
 
@@ -141,21 +144,21 @@ export const CommissionManagementPage: React.FC = () => {
       return
     }
 
+    const body =  { 
+      commissionIds: selectedCommissions, 
+      status, 
+      reason 
+    }
+
     try {
       const token = localStorage.getItem('token')
-      const response = await apiRequest('/api/v1/admin/commissions/bulk-update', {
-        method: 'POST',
+      const response = await api.post('/admin/commissions/bulk-update', body, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
-          commissionIds: selectedCommissions, 
-          status, 
-          reason 
-        })
       })
 
-      if (!response.ok) {
+      if (!response.data || response.data.data) {
         throw new Error('Failed to perform bulk update')
       }
 

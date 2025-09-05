@@ -5,9 +5,12 @@ export interface CommissionSummary {
   totalEarnings: number
   pendingCommissions: number
   approvedCommissions: number
+  paidCommissions: number
+  clawedBackAmount: number
   availableBalance: number
   thisMonthEarnings: number
   conversionRate: number
+  totalCommissions: number
 }
 
 export interface ReferralStats {
@@ -39,6 +42,7 @@ interface DashboardState {
   commissionSummary: CommissionSummary | null
   referralStats: ReferralStats | null
   recentActivity: RecentActivity[]
+  performanceData: PerformanceData[]
   isLoading: boolean
   error: string | null
   lastUpdated: string | null
@@ -48,6 +52,7 @@ const initialState: DashboardState = {
   commissionSummary: null,
   referralStats: null,
   recentActivity: [],
+  performanceData: [],
   isLoading: false,
   error: null,
   lastUpdated: null,
@@ -56,14 +61,10 @@ const initialState: DashboardState = {
 // Async thunks for dashboard data
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchData',
-  async (marketerId: string, { getState, rejectWithValue, dispatch }) => {
+  async (marketerId: string, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { 
         auth: { token: string | null }
-        referral: {
-          customerReferrals: any[]
-          referralLinks: any[]
-        }
       }
       const token = state.auth.token
 
@@ -71,162 +72,126 @@ export const fetchDashboardData = createAsyncThunk(
         return rejectWithValue('No authentication token')
       }
 
-      // Import referral actions dynamically to avoid circular dependency
-      const { fetchReferralLinks, fetchCustomerReferrals } = await import('./referralSlice')
+      // Fetch dashboard data directly from the API
+      const { ApiService } = await import('../../services/api')
+      const apiService = new ApiService()
       
-      // Fetch referral data using the same actions as the referrals page
-      await Promise.all([
-        dispatch(fetchReferralLinks(marketerId)),
-        dispatch(fetchCustomerReferrals({ marketerId, filters: {
-          status: 'all',
-          product: 'all', 
-          dateRange: '30',
-          search: '',
-          commissionStatus: 'all',
-          source: 'all'
-        }}))
-      ])
+      const dashboardData = await apiService.request<any>('GET', '/dashboard', undefined, { baseURL: '/api/v1/marketer' })
+      
+      console.log('Dashboard API response:', dashboardData)
 
-      // Get updated state after fetching referral data
-      const updatedState = getState() as { 
-        auth: { token: string | null }
-        referral: {
-          customerReferrals: any[]
-          referralLinks: any[]
-        }
+      // Transform commission summary data
+      const commissionSummaryData = dashboardData.commissionSummary || {}
+      const commissionSummary: CommissionSummary = {
+        totalEarnings: commissionSummaryData.totalEarned || 0,
+        pendingCommissions: commissionSummaryData.pendingAmount || 0,
+        approvedCommissions: commissionSummaryData.approvedAmount || 0,
+        paidCommissions: commissionSummaryData.paidAmount || 0,
+        clawedBackAmount: commissionSummaryData.clawedBackAmount || 0,
+        availableBalance: commissionSummaryData.paidAmount || 0,
+        thisMonthEarnings: 0, // Calculate from recent customers
+        conversionRate: dashboardData.performanceMetrics?.conversionRate || 0,
+        totalCommissions: commissionSummaryData.totalCommissions || 0,
       }
 
-      // Fetch commission data using the commission service
+      // Calculate this month's earnings from recent customers
+      const recentCustomers = dashboardData.recentCustomers || []
+      const currentMonth = new Date().getMonth()
+      const currentYear = new Date().getFullYear()
+      
+      const thisMonthEarnings = recentCustomers
+        .filter((customer: any) => {
+          const customerDate = new Date(customer.createdAt)
+          return customerDate.getMonth() === currentMonth && 
+                 customerDate.getFullYear() === currentYear &&
+                 customer.status === 'completed'
+        })
+        .reduce((sum: number, customer: any) => sum + (customer.commissionEarned || 0), 0)
+      
+      commissionSummary.thisMonthEarnings = thisMonthEarnings
+
+      // Transform referral stats from dashboard data
+      const performanceMetrics = dashboardData.performanceMetrics || {}
+      const referralStats: ReferralStats = {
+        totalClicks: performanceMetrics.totalClicks || 0,
+        totalConversions: performanceMetrics.totalConversions || 0,
+        conversionRate: performanceMetrics.conversionRate || 0,
+        totalCommissions: commissionSummaryData.totalEarned || 0,
+        pendingCommissions: commissionSummaryData.pendingAmount || 0,
+        approvedCommissions: commissionSummaryData.approvedAmount || 0,
+        paidCommissions: commissionSummaryData.paidAmount || 0,
+      }
+
+      // Transform recent activity from recent customers
+      const recentActivity: RecentActivity[] = recentCustomers.slice(0, 5).map((customer: any) => ({
+        id: customer.id,
+        type: 'referral' as const,
+        description: `${customer.name !== 'N/A' ? customer.name : customer.email} ${customer.status === 'completed' ? 'completed application' : customer.status === 'started' ? 'started application' : customer.status}`,
+        amount: customer.commissionEarned || undefined,
+        timestamp: customer.createdAt,
+        status: customer.status === 'completed' ? 'completed' : customer.status === 'started' ? 'pending' : customer.status,
+      }))
+
+      // Fetch commission details for performance chart
       const { commissionService } = await import('../../services/commissionService')
+      let performanceData: PerformanceData[] = []
       
-      const [commissionSummaryResult, commissionsResult] = await Promise.allSettled([
-        commissionService.getCommissionSummary(),
-        commissionService.getCommissions({}, 1, 100) // Get recent commissions for this month calculation
-      ])
-
-      // Process commission data
-      let commissionSummary: CommissionSummary = {
-        totalEarnings: 0,
-        pendingCommissions: 0,
-        approvedCommissions: 0,
-        availableBalance: 0,
-        thisMonthEarnings: 0,
-        conversionRate: 0,
-      }
-
-      if (commissionSummaryResult.status === 'fulfilled' && commissionSummaryResult.value) {
-        const data = commissionSummaryResult.value
-        commissionSummary = {
-          totalEarnings: data.totalEarned || 0,
-          pendingCommissions: data.pendingCommissions || 0,
-          approvedCommissions: data.totalEarned || 0,
-          availableBalance: data.availableBalance || 0,
-          thisMonthEarnings: 0, // Will calculate below
-          conversionRate: 0, // Will calculate from referral data
-        }
-      }
-
-      // Calculate this month's earnings from commissions
-      if (commissionsResult.status === 'fulfilled' && commissionsResult.value) {
-        const commissions = commissionsResult.value.items || []
-        const currentMonth = new Date().getMonth()
-        const currentYear = new Date().getFullYear()
+      try {
+        const commissionsResult = await commissionService.getCommissions({}, 1, 100)
+        const commissions = commissionsResult.items || []
         
-        const thisMonthCommissions = commissions.filter(commission => {
-          const commissionDate = new Date(commission.conversionDate)
-          return commissionDate.getMonth() === currentMonth && 
-                 commissionDate.getFullYear() === currentYear
+        // Group commissions by month for the last 6 months
+        const monthlyData: { [key: string]: { commissions: number; referrals: number } } = {}
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date()
+          date.setMonth(date.getMonth() - i)
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+          const monthName = months[date.getMonth()]
+          monthlyData[monthKey] = { commissions: 0, referrals: 0 }
+        }
+        
+        // Aggregate commission data by month
+        commissions.forEach((commission: any) => {
+          const date = new Date(commission.conversionDate)
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+          
+          if (monthlyData[monthKey]) {
+            monthlyData[monthKey].commissions += commission.commissionAmount || 0
+            monthlyData[monthKey].referrals += 1
+          }
         })
         
-        commissionSummary.thisMonthEarnings = thisMonthCommissions.reduce(
-          (sum, commission) => sum + commission.commissionAmount, 
-          0
-        )
+        // Convert to performance data format
+        performanceData = Object.entries(monthlyData).map(([monthKey, data]) => {
+          const [year, month] = monthKey.split('-')
+          const monthIndex = parseInt(month) - 1
+          return {
+            month: months[monthIndex],
+            commissions: data.commissions,
+            referrals: data.referrals
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching commission details for performance chart:', error)
+        // Use fallback data
+        performanceData = [
+          { month: 'Jan', commissions: 0, referrals: 0 },
+          { month: 'Feb', commissions: 0, referrals: 0 },
+          { month: 'Mar', commissions: 0, referrals: 0 },
+          { month: 'Apr', commissions: 0, referrals: 0 },
+          { month: 'May', commissions: 0, referrals: 0 },
+          { month: 'Jun', commissions: 0, referrals: 0 },
+        ]
       }
-
-      // Process referral stats - calculate from customer referrals data
-      let referralStats: ReferralStats = {
-        totalClicks: 0,
-        totalConversions: 0,
-        conversionRate: 0,
-        totalCommissions: 0,
-        pendingCommissions: 0,
-        approvedCommissions: 0,
-        paidCommissions: 0,
-      }
-
-      // Get referrals data from Redux state (after dispatching referral actions)
-      const referrals = updatedState.referral.customerReferrals || []
-      const referralLinks = updatedState.referral.referralLinks || []
-
-      console.log('Dashboard - Customer referrals from Redux:', referrals)
-      console.log('Dashboard - Referral links from Redux:', referralLinks)
-
-      // Calculate stats from referrals data (same logic as ReferralAnalytics component)
-      const totalConversions = referrals.filter((r: any) => r.status === 'converted').length
-      
-      // Handle referralLinks structure - ensure it's always treated as an array
-      let referralLinksArray: any[] = []
-      if (Array.isArray(referralLinks)) {
-        referralLinksArray = referralLinks
-      } else {
-        // If referralLinks is not an array, treat as empty to prevent errors
-        referralLinksArray = []
-      }
-      
-      const totalClicks = referralLinksArray.reduce((sum: number, link: any) => sum + (link.clickCount || 0), 0)
-      const conversionRate = totalClicks > 0 ? totalConversions / totalClicks : 0
-
-      console.log('Dashboard - Calculated stats:', {
-        totalConversions,
-        totalClicks,
-        conversionRate,
-        referralsLength: referrals.length,
-        referralLinksLength: Array.isArray(referralLinks) ? referralLinks.length : 'not array',
-        referralLinksType: typeof referralLinks,
-        referralLinksArrayLength: referralLinksArray.length
-      })
-
-      const totalCommissions = referrals
-        .filter(r => r.commissionAmount)
-        .reduce((sum, r) => sum + (r.commissionAmount || 0), 0)
-
-      const pendingCommissions = referrals
-        .filter(r => r.commissionAmount && r.commissionStatus === 'pending')
-        .reduce((sum, r) => sum + (r.commissionAmount || 0), 0)
-
-      const approvedCommissions = referrals
-        .filter(r => r.commissionAmount && r.commissionStatus === 'approved')
-        .reduce((sum, r) => sum + (r.commissionAmount || 0), 0)
-
-      const paidCommissions = referrals
-        .filter(r => r.commissionAmount && r.commissionStatus === 'paid')
-        .reduce((sum, r) => sum + (r.commissionAmount || 0), 0)
-
-      referralStats = {
-        totalClicks,
-        totalConversions,
-        conversionRate,
-        totalCommissions,
-        pendingCommissions,
-        approvedCommissions,
-        paidCommissions,
-      }
-
-      // Process recent activity from customer referrals
-      const recentActivity: RecentActivity[] = referrals.slice(0, 5).map((referral: any) => ({
-        id: referral.id,
-        type: 'referral' as const,
-        description: `${referral.customerName || referral.customerEmail} ${referral.status === 'converted' ? 'completed application' : 'started application'}`,
-        amount: referral.initialSpend || undefined,
-        timestamp: referral.referredAt,
-        status: referral.status === 'converted' ? 'completed' : referral.status === 'pending' ? 'pending' : 'in_progress',
-      }))
 
       return {
         commissionSummary,
         referralStats,
         recentActivity,
+        performanceData,
       }
     } catch (error) {
       console.error('Dashboard fetch error:', error)
@@ -272,6 +237,7 @@ const dashboardSlice = createSlice({
       state.commissionSummary = null
       state.referralStats = null
       state.recentActivity = []
+      state.performanceData = []
       state.lastUpdated = null
     },
   },
@@ -287,6 +253,7 @@ const dashboardSlice = createSlice({
         state.commissionSummary = action.payload.commissionSummary
         state.referralStats = action.payload.referralStats
         state.recentActivity = action.payload.recentActivity
+        state.performanceData = action.payload.performanceData
         state.lastUpdated = new Date().toISOString()
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {

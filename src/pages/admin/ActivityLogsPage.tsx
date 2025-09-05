@@ -8,6 +8,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import { apiRequest } from '../../utils/apiConfig'
+import api from "../../services/api"
 
 interface AuditLog {
   _id: string
@@ -121,17 +122,17 @@ export const ActivityLogsPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString())
       })
 
-      const response = await apiRequest(`/api/v1/admin/activity-logs?${queryParams}`, {
+      const response = await api.get(`/admin/activity-logs?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to fetch activity logs')
       }
 
-      const data: { data: ActivityLogsResponse } = await response.json()
+      const data: { data: ActivityLogsResponse } = response.data || response.data.data
       setLogs(data.data.logs)
       setPagination(data.data.pagination)
     } catch (err: any) {
@@ -152,17 +153,18 @@ export const ActivityLogsPage: React.FC = () => {
         }
       })
 
-      const response = await apiRequest(`/api/v1/admin/activity-logs/export?${queryParams}`, {
+      const response = await api.get(`/admin/activity-logs/export?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-        }
+        },
+        responseType: "blob"
       })
 
-      if (!response.ok) {
+      if (!response.data || !response.data.data) {
         throw new Error('Failed to export logs')
       }
 
-      const blob = await response.blob()
+      const blob = response.data || response.data.data
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

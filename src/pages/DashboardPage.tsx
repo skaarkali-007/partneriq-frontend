@@ -16,6 +16,7 @@ export const DashboardPage: React.FC = () => {
     commissionSummary, 
     referralStats, 
     recentActivity, 
+    performanceData,
     isLoading, 
     error,
     lastUpdated 
@@ -107,7 +108,7 @@ export const DashboardPage: React.FC = () => {
         {/* Performance Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Performance Overview</h2>
-          <PerformanceChart />
+          <PerformanceChart data={performanceData} />
         </div>
 
         {/* Recent Activity */}

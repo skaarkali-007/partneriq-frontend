@@ -23,8 +23,34 @@ class ReferralService extends ApiService {
   }
 
   async getReferralLinks(marketerId: string): Promise<ReferralLink[]> {
-    const response = await this.get<ReferralLink[]>(`/links/${marketerId}`)
-    return response || []
+    // Use the dashboard endpoint to get referral links data
+    try {
+      const response = await api.get(`/marketer/dashboard`)
+      const dashboardData = response.data?.data || {}
+      const referralLinks = dashboardData.referralLinks || []
+      
+      // Transform the referral links data to match ReferralLink interface
+      const links: ReferralLink[] = referralLinks.map((link: any) => ({
+        id: link.id,
+        marketerId: marketerId,
+        productId: link.product !== 'N/A' ? link.product : '',
+        productName: link.product !== 'N/A' ? link.product : 'Unknown Product',
+        trackingCode: link.trackingCode,
+        url: link.url,
+        clickCount: link.clickCount || 0,
+        conversionCount: link.conversionCount || 0,
+        isActive: true,
+        createdAt: link.createdAt,
+        expiresAt: undefined,
+        lastClickAt: undefined,
+        metadata: {}
+      }))
+      
+      return links
+    } catch (error) {
+      console.error('Error fetching referral links:', error)
+      throw error
+    }
   }
 
   async createReferralLink(data: CreateReferralLinkRequest): Promise<ReferralLink> {
@@ -32,31 +58,36 @@ class ReferralService extends ApiService {
   }
 
   async getCustomerReferrals(marketerId: string, filters: ReferralFilters): Promise<CustomerReferral[]> {
-    const queryParams = new URLSearchParams()
-    
-    if (filters.status && filters.status !== 'all') {
-      queryParams.append('status', filters.status)
-    }
-    if (filters.product && filters.product !== 'all') {
-      queryParams.append('product', filters.product)
-    }
-    if (filters.dateRange && filters.dateRange !== '0') {
-      queryParams.append('days', filters.dateRange)
-    }
-    if (filters.search) {
-      queryParams.append('search', filters.search)
-    }
-    if (filters.commissionStatus && filters.commissionStatus !== 'all') {
-      queryParams.append('commissionStatus', filters.commissionStatus)
-    }
-    if (filters.source && filters.source !== 'all') {
-      queryParams.append('source', filters.source)
-    }
-
-    // Use the default axios instance directly to bypass ApiService URL construction issues
+    // Use the dashboard endpoint to get customer referrals data
     try {
-      const response = await api.get(`/marketer/${marketerId}/customers?${queryParams}`)
-      return response.data?.data?.referrals || []
+      const response = await api.get(`/marketer/dashboard`)
+      const dashboardData = response.data?.data || {}
+      const recentCustomers = dashboardData.recentCustomers || []
+      
+      // Transform the recent customers data to match CustomerReferral interface
+      const referrals: CustomerReferral[] = recentCustomers.map((customer: any) => ({
+        id: customer.id,
+        marketerId: marketerId,
+        customerEmail: customer.email !== 'N/A' ? customer.email : '',
+        customerName: customer.name !== 'N/A' ? customer.name : '',
+        productName: customer.product !== 'N/A' ? customer.product : '',
+        productId: customer.product !== 'N/A' ? customer.product : '',
+        trackingCode: '', // Not available in current data
+        status: customer.status === 'completed' ? 'converted' : 
+                customer.status === 'started' ? 'pending' : 
+                customer.status === 'rejected' ? 'rejected' : 'pending',
+        source: 'referral_link', // Default source
+        referredAt: customer.createdAt,
+        convertedAt: customer.status === 'completed' ? customer.createdAt : undefined,
+        initialSpend: customer.commissionEarned > 0 ? customer.commissionEarned * 10 : undefined, // Estimate based on commission
+        commissionAmount: customer.commissionEarned || 0,
+        commissionStatus: customer.commissionEarned > 0 ? 'approved' : 'pending',
+        lastActivityAt: customer.createdAt,
+        notes: '',
+        metadata: {}
+      }))
+      
+      return referrals
     } catch (error) {
       console.error('Error fetching customer referrals:', error)
       throw error
@@ -64,7 +95,32 @@ class ReferralService extends ApiService {
   }
 
   async getReferralStats(marketerId: string): Promise<ReferralStats> {
-    return this.get<ReferralStats>(`/stats/${marketerId}`)
+    // Use the dashboard endpoint to get performance metrics
+    try {
+      const response = await api.get(`/marketer/dashboard`)
+      const dashboardData = response.data?.data || {}
+      const performanceMetrics = dashboardData.performanceMetrics || {}
+      const commissionSummary = dashboardData.commissionSummary || {}
+      
+      // Transform the performance metrics to match ReferralStats interface
+      const stats: ReferralStats = {
+        totalClicks: performanceMetrics.totalClicks || 0,
+        totalConversions: performanceMetrics.totalConversions || 0,
+        conversionRate: (performanceMetrics.conversionRate || 0) / 100, // Convert percentage to decimal
+        totalCommissions: commissionSummary.totalEarned || 0,
+        pendingCommissions: commissionSummary.pendingAmount || 0,
+        approvedCommissions: commissionSummary.approvedAmount || 0,
+        paidCommissions: commissionSummary.paidAmount || 0,
+        averageCommissionAmount: 0, // Calculate if needed
+        topPerformingLinks: [],
+        recentActivity: []
+      }
+      
+      return stats
+    } catch (error) {
+      console.error('Error fetching referral stats:', error)
+      throw error
+    }
   }
 
   async updateReferralLink(id: string, data: Partial<ReferralLink>): Promise<ReferralLink> {

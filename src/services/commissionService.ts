@@ -16,7 +16,7 @@ export interface CommissionClawbackRequest {
 
 class CommissionService extends ApiService {
   constructor() {
-    super() // Don't set a base URL since we need to call different endpoints
+    super('/commissions') // Set default base URL for commission endpoints
   }
 
   async getCommissions(filters?: CommissionFilters, page: number = 1, limit: number = 10): Promise<PaginatedResponse<Commission>> {
@@ -24,12 +24,12 @@ class CommissionService extends ApiService {
     const result = await this.request<any>('GET', '/commission-details', undefined, { baseURL: '/api/v1/marketer' })
     
     // Transform the data to match the expected format
-    const rawCommissions = result.data || []
+    const rawCommissions = result || []
     const commissions = rawCommissions.map((c: any) => ({
       id: c.customerId,
-      productName: c.productName,
-      customerId: c.customerName,
-      customerEmail: c.customerEmail,
+      productName: c.productName || 'N/A',
+      customerId: c.customerName || 'N/A',
+      customerEmail: c.customerEmail || 'N/A',
       trackingCode: 'N/A', // Not available in current data
       initialSpendAmount: c.initialSpend,
       commissionAmount: c.commissionEarned,
@@ -45,7 +45,7 @@ class CommissionService extends ApiService {
     
     if (filters?.status) {
       filteredCommissions = filteredCommissions.filter((c: any) => 
-        filters.status === 'paid' ? c.commissionPaid : c.commissionStatus === filters.status
+        c.status === filters.status
       )
     }
     
@@ -82,14 +82,14 @@ class CommissionService extends ApiService {
     const result = await this.request<any>('GET', '/dashboard', undefined, { baseURL: '/api/v1/marketer' })
     
     // Transform the commission summary data to match expected format
-    const commissionSummary = result.data?.commissionSummary || {}
+    const commissionSummary = result.commissionSummary || {}
     
     return {
-      totalEarned: commissionSummary.totalCommissionEarned || 0,
-      pendingCommissions: commissionSummary.pendingCommission || 0,
-      approvedCommissions: 0,
-      paidCommissions: 0,
-      availableBalance: commissionSummary.totalCommissionEarned || 0,
+      totalEarned: commissionSummary.totalEarned || 0,
+      pendingCommissions: commissionSummary.pendingAmount || 0,
+      approvedCommissions: commissionSummary.approvedAmount || 0,
+      paidCommissions: commissionSummary.paidAmount || 0,
+      availableBalance: commissionSummary.paidAmount || 0,
       thisMonthEarnings: 0,
       lastMonthEarnings: 0,
       conversionRate: 0,
@@ -125,7 +125,7 @@ class CommissionService extends ApiService {
   async getCommissionAnalytics(): Promise<any> {
     // Use the enhanced ApiService to fetch commission details from the correct endpoint
     const result = await this.request<any>('GET', '/commission-details', undefined, { baseURL: '/api/v1/marketer' })
-    const commissions = result.data || []
+    const commissions = result || []
     
     // Calculate analytics from commission data
     const totalCommissions = commissions.length
