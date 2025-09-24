@@ -7,7 +7,7 @@ import {
   ArrowDownTrayIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
-import { apiRequest } from '../../utils/apiConfig'
+
 import api from '../../services/api'
 
 interface Payout {

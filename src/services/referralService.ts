@@ -57,7 +57,7 @@ class ReferralService extends ApiService {
     return this.post<ReferralLink>('/links', data)
   }
 
-  async getCustomerReferrals(marketerId: string, filters: ReferralFilters): Promise<CustomerReferral[]> {
+  async getCustomerReferrals(marketerId: string, _filters: ReferralFilters): Promise<CustomerReferral[]> {
     // Use the dashboard endpoint to get customer referrals data
     try {
       const response = await api.get(`/marketer/dashboard`)
@@ -94,7 +94,7 @@ class ReferralService extends ApiService {
     }
   }
 
-  async getReferralStats(marketerId: string): Promise<ReferralStats> {
+  async getReferralStats(_marketerId: string): Promise<ReferralStats> {
     // Use the dashboard endpoint to get performance metrics
     try {
       const response = await api.get(`/marketer/dashboard`)
@@ -111,9 +111,8 @@ class ReferralService extends ApiService {
         pendingCommissions: commissionSummary.pendingAmount || 0,
         approvedCommissions: commissionSummary.approvedAmount || 0,
         paidCommissions: commissionSummary.paidAmount || 0,
-        averageCommissionAmount: 0, // Calculate if needed
-        topPerformingLinks: [],
-        recentActivity: []
+
+
       }
       
       return stats

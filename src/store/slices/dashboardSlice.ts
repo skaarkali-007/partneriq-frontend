@@ -61,7 +61,7 @@ const initialState: DashboardState = {
 // Async thunks for dashboard data
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchData',
-  async (marketerId: string, { getState, rejectWithValue }) => {
+  async (_marketerId: string, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { 
         auth: { token: string | null }
@@ -73,10 +73,10 @@ export const fetchDashboardData = createAsyncThunk(
       }
 
       // Fetch dashboard data directly from the API
-      const { ApiService } = await import('../../services/api')
-      const apiService = new ApiService()
+      const api = (await import('../../services/api')).default
       
-      const dashboardData = await apiService.request<any>('GET', '/dashboard', undefined, { baseURL: '/api/v1/marketer' })
+      const response = await api.get('/api/v1/marketer/dashboard')
+      const dashboardData = response.data.data
       
       console.log('Dashboard API response:', dashboardData)
 
@@ -149,7 +149,7 @@ export const fetchDashboardData = createAsyncThunk(
           const date = new Date()
           date.setMonth(date.getMonth() - i)
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-          const monthName = months[date.getMonth()]
+
           monthlyData[monthKey] = { commissions: 0, referrals: 0 }
         }
         
@@ -166,7 +166,7 @@ export const fetchDashboardData = createAsyncThunk(
         
         // Convert to performance data format
         performanceData = Object.entries(monthlyData).map(([monthKey, data]) => {
-          const [year, month] = monthKey.split('-')
+          const [, month] = monthKey.split('-')
           const monthIndex = parseInt(month) - 1
           return {
             month: months[monthIndex],

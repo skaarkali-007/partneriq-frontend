@@ -6,7 +6,7 @@ import {
   TrashIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
-import { apiRequest } from '../../utils/apiConfig'
+
 import  api  from '../../services/api'
 interface Product {
   _id: string

@@ -7,7 +7,7 @@ import { AppDispatch } from '../../store'
 import { addPaymentMethod, updatePaymentMethod, deletePaymentMethod } from '../../store/slices/commissionSlice'
 import { PaymentMethod } from '../../types/api'
 import toast from 'react-hot-toast'
-import { Bitcoin } from 'lucide-react'
+
 
 interface PaymentMethodManagerProps {
   paymentMethods: PaymentMethod[]
