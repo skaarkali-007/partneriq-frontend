@@ -492,26 +492,29 @@ export class ApiService {
 
     switch (status) {
       case 400:
-        message = response.data?.message || ERROR_MESSAGES.VALIDATION_ERROR
+        // Try multiple possible error message fields from backend response
+        message = response.data?.error || response.data?.message || ERROR_MESSAGES.VALIDATION_ERROR
         break
       case 401:
-        message = ERROR_MESSAGES.UNAUTHORIZED
+        message = response.data?.error || response.data?.message || ERROR_MESSAGES.UNAUTHORIZED
         break
       case 404:
-        message = ERROR_MESSAGES.NOT_FOUND
+        message = response.data?.error || response.data?.message || ERROR_MESSAGES.NOT_FOUND
         break
       case 408:
-        message = ERROR_MESSAGES.TIMEOUT
+        message = response.data?.error || response.data?.message || ERROR_MESSAGES.TIMEOUT
         type = 'timeout'
         break
       case 500:
       case 502:
       case 503:
       case 504:
+        // For server errors, still use generic message for security
         message = ERROR_MESSAGES.SERVER_ERROR
         break
       default:
-        message = response.data?.message || ERROR_MESSAGES.SERVER_ERROR
+        // For other client errors (422, 409, etc.), show the actual error message
+        message = response.data?.error || response.data?.message || ERROR_MESSAGES.SERVER_ERROR
     }
 
     // Log the user-facing error message
