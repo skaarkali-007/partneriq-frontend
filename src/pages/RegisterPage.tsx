@@ -268,7 +268,7 @@ export const RegisterPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="flex justify-center hover:opacity-80 transition-opacity">
-            <img src="/partner-iq-logo.svg" alt="Partner IQ" width="200" height="53" />
+            <img src="/partner-iq-logo.svg" alt="Partner IQ" width="75" height="20" />
           </Link>
           <p className="mt-2 text-sm text-gray-600">
             Already have an account?{' '}

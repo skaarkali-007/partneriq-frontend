@@ -139,7 +139,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <img src="/partner-iq-logo.svg" alt="Partner IQ" width="200" height="53" />
+              <img src="/partner-iq-logo.svg" alt="Partner IQ" width="75" height="20" />
             </div>
             <div className="text-sm text-gray-500">
               Referred by: {marketer.firstName} {marketer.lastName}

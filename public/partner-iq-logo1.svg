@@ -1,0 +1,10 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle for "P" -->
+  <circle cx="25" cy="25" r="20" fill="#2563EB"/>
+  
+  <!-- "P" letter in white -->
+  <text x="25" y="32" text-anchor="middle" fill="white" font-size="20" font-weight="700" font-family="Inter, sans-serif">P</text>
+  
+  <!-- "Partner IQ" text -->
+  <text x="55" y="32" fill="#2563EB" font-size="22" font-weight="600" font-family="Inter, sans-serif">Partner IQ</text>
+</svg>

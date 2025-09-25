@@ -10,7 +10,9 @@ export const AboutPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <PartnerIQLogo size="md" />
+              <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+                <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+              </Link>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -203,9 +205,9 @@ export const AboutPage: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl font-bold text-white">JS</span>
+                <span className="text-3xl font-bold text-white">JA</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">John Smith</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">John Anderson</h3>
               <p className="text-blue-600 font-medium mb-4">CEO & Co-Founder</p>
               <p className="text-gray-600 leading-relaxed">
                 Former VP of Digital Marketing at a Fortune 500 financial services company. 
@@ -215,9 +217,9 @@ export const AboutPage: React.FC = () => {
 
             <div className="text-center">
               <div className="w-32 h-32 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl font-bold text-white">MJ</span>
+                <span className="text-3xl font-bold text-white">ME</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Maria Johnson</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Maria Ekhart</h3>
               <p className="text-green-600 font-medium mb-4">CTO & Co-Founder</p>
               <p className="text-gray-600 leading-relaxed">
                 Former Lead Engineer at a major affiliate network. Expert in scalable 
@@ -229,7 +231,7 @@ export const AboutPage: React.FC = () => {
               <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-3xl font-bold text-white">DL</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">David Lee</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Danny Lee</h3>
               <p className="text-purple-600 font-medium mb-4">Head of Partner Success</p>
               <p className="text-gray-600 leading-relaxed">
                 20+ years in financial services sales and partner management. 

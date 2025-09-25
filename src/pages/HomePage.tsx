@@ -6,38 +6,40 @@ import FAQSection from '../components/common/FAQSection';
 export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
+      {/* Floating Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <PartnerIQLogo size="md" />
+              <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+                <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+              </Link>
             </div>
             
             <div className="flex items-center space-x-4">
               <nav className="hidden md:flex space-x-8 mr-8">
                 <Link 
                   to="/features" 
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
                 >
                   Features
                 </Link>
                 <Link 
                   to="/about" 
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
                 >
                   About
                 </Link>
               </nav>
               <Link 
                 to="/login" 
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
               >
                 Log in
               </Link>
               <Link 
                 to="/register" 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
               >
                 Try it free
               </Link>
@@ -45,16 +47,27 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </header>
+      
+      {/* Spacer for fixed header */}
+      <div className="h-20"></div>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
+          style={{ backgroundImage: 'url(/hero.jpg)' }}
+        />
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-blue-700/20 to-blue-800/20" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-6xl font-bold leading-tight mb-6">
               Turn Your Network Into 
-              <span className="text-blue-200"> High-Earning Revenue</span>
+              <span className="text-white-200"> High-Earning Revenue</span>
             </h1>
-            <p className="text-xl text-blue-100 mb-8 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-xl text-white mb-8 leading-relaxed max-w-3xl mx-auto">
               Join Partner IQ and earn substantial commissions promoting proven financial products. 
               Our top partners earn $50K+ monthly with full marketing support and industry-leading conversion rates.
             </p>
@@ -74,15 +87,15 @@ export const HomePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
               <div className="text-center">
                 <div className="text-4xl font-bold mb-2">$2.8M+</div>
-                <div className="text-blue-200">Paid to Partners</div>
+                <div className="text-white-200">Paid to Partners</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold mb-2">15.2%</div>
-                <div className="text-blue-200">Average Conversion Rate</div>
+                <div className="text-white-200">Average Conversion Rate</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold mb-2">500+</div>
-                <div className="text-blue-200">Active Partners</div>
+                <div className="text-white-200">Active Partners</div>
               </div>
             </div>
           </div>
@@ -260,8 +273,12 @@ export const HomePage: React.FC = () => {
                 The products convert incredibly well and the support team is phenomenal."
               </blockquote>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-blue-600 font-semibold">SM</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img 
+                    src="/serah.jpg" 
+                    alt="Sarah Martinez" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900">Sarah Martinez</div>
@@ -285,8 +302,12 @@ export const HomePage: React.FC = () => {
                 Plus, the recurring commissions create a stable income stream I can count on."
               </blockquote>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-green-600 font-semibold">MJ</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img 
+                    src="/mike.jpg" 
+                    alt="Michael Johnson" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900">Michael Johnson</div>
@@ -310,8 +331,12 @@ export const HomePage: React.FC = () => {
                 and I have access to marketing materials that actually work. It's like having a marketing team."
               </blockquote>
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-purple-600 font-semibold">LC</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img 
+                    src="/lisa.jpg" 
+                    alt="Lisa Chen" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900">Lisa Chen</div>

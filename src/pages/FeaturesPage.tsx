@@ -10,7 +10,9 @@ export const FeaturesPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <PartnerIQLogo size="md" />
+              <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+                <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+              </Link>
             </div>
             
             <div className="flex items-center space-x-4">
