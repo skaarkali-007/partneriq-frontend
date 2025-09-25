@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import { useAuth } from '../../contexts/AuthContext'
 import { logout } from '../../store/slices/authSlice'
 import { AppDispatch } from '../../store'
-import PartnerIQLogo from '../common/PartnerIQLogo'
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode
