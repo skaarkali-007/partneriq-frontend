@@ -9,6 +9,8 @@ import {
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
 import api from '../../services/api'
+import { AlertModal } from '../../components/ui/AlertModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 
 interface User {
   _id: string
@@ -74,6 +76,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 export const UserManagementPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth()
   const [users, setUsers] = useState<User[]>([])
+  const alertModal = useAlertModal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
@@ -128,13 +131,21 @@ export const UserManagementPage: React.FC = () => {
       // Refresh users list
       fetchUsers()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
   const bulkAction = async (action: string, reason?: string) => {
     if (selectedUsers.length === 0) {
-      alert('Please select users first')
+      alertModal.showAlert({
+        title: 'No Selection',
+        message: 'Please select users first',
+        type: 'warning'
+      })
       return
     }
 
@@ -148,7 +159,11 @@ export const UserManagementPage: React.FC = () => {
       setSelectedUsers([])
       fetchUsers()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -174,7 +189,11 @@ export const UserManagementPage: React.FC = () => {
       const response = await api.get(`/admin/users/${userId}/kyc`)
       setKycProfile(response.data.data.profile)
     } catch (err: any) {
-      alert(`Error fetching KYC data: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error fetching KYC data: ${err.message}`,
+        type: 'error'
+      })
     } finally {
       setKycLoading(false)
     }
@@ -188,7 +207,11 @@ export const UserManagementPage: React.FC = () => {
       await fetchKYCProfile(userId)
       fetchUsers()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -199,7 +222,11 @@ export const UserManagementPage: React.FC = () => {
       // Refresh KYC profile
       await fetchKYCProfile(userId)
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -219,9 +246,17 @@ export const UserManagementPage: React.FC = () => {
       // In a real implementation, this would download the file
       // For now, we'll just show a message
       const data = await response.json()
-      alert(data.message)
+      alertModal.showAlert({
+        title: 'Download',
+        message: data.message,
+        type: 'info'
+      })
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -673,6 +708,18 @@ export const UserManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={alertModal.handleClose}
+        onConfirm={alertModal.handleConfirm}
+        title={alertModal.options.title}
+        message={alertModal.options.message}
+        type={alertModal.options.type}
+        confirmText={alertModal.options.confirmText}
+        cancelText={alertModal.options.cancelText}
+        showCancel={alertModal.options.showCancel}
+      />
     </div>
   )
 }

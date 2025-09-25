@@ -7,6 +7,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 import api from '../../services/api'
+import { AlertModal } from '../../components/ui/AlertModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 
 interface Commission {
   _id: string
@@ -62,6 +64,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 export const CommissionManagementPage: React.FC = () => {
   const [commissions, setCommissions] = useState<Commission[]>([])
   const [loading, setLoading] = useState(true)
+  const alertModal = useAlertModal()
   const [error, setError] = useState<string | null>(null)
   const [selectedCommissions, setSelectedCommissions] = useState<string[]>([])
   const [filters, setFilters] = useState({
@@ -134,13 +137,21 @@ export const CommissionManagementPage: React.FC = () => {
 
       fetchCommissions()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
   const bulkUpdateCommissions = async (status: string, reason?: string) => {
     if (selectedCommissions.length === 0) {
-      alert('Please select commissions first')
+      alertModal.showAlert({
+        title: 'No Selection',
+        message: 'Please select commissions first',
+        type: 'warning'
+      })
       return
     }
 
@@ -165,7 +176,11 @@ export const CommissionManagementPage: React.FC = () => {
       setSelectedCommissions([])
       fetchCommissions()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -471,6 +486,18 @@ export const CommissionManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={alertModal.handleClose}
+        onConfirm={alertModal.handleConfirm}
+        title={alertModal.options.title}
+        message={alertModal.options.message}
+        type={alertModal.options.type}
+        confirmText={alertModal.options.confirmText}
+        cancelText={alertModal.options.cancelText}
+        showCancel={alertModal.options.showCancel}
+      />
     </div>
   )
 }

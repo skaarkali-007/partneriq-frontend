@@ -10,6 +10,9 @@ import {
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
 import api from '../../services/api'
+import { AlertModal } from '../../components/ui/AlertModal'
+import { PromptModal } from '../../components/ui/PromptModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 
 interface CustomerApplication {
   _id: string
@@ -113,6 +116,7 @@ const KYCStatusBadge: React.FC<{ status: string }> = ({ status }) => {
 export const CustomerApplicationsPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth()
   const [applications, setApplications] = useState<CustomerApplication[]>([])
+  const alertModal = useAlertModal()
   const [stats, setStats] = useState<ApplicationStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -192,7 +196,11 @@ export const CustomerApplicationsPage: React.FC = () => {
 
   const handleStatusUpdate = async () => {
     if (!selectedApplication || !statusUpdateData.status || !statusUpdateData.reason) {
-      alert('Please fill in all required fields')
+      alertModal.showAlert({
+        title: 'Missing Information',
+        message: 'Please fill in all required fields',
+        type: 'warning'
+      })
       return
     }
 
@@ -204,13 +212,21 @@ export const CustomerApplicationsPage: React.FC = () => {
       fetchApplications()
       fetchStats()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
   const handlePaymentUpdate = async () => {
     if (!selectedApplication || !paymentUpdateData.reason) {
-      alert('Please provide a reason for the payment update')
+      alertModal.showAlert({
+        title: 'Missing Information',
+        message: 'Please provide a reason for the payment update',
+        type: 'warning'
+      })
       return
     }
 
@@ -233,17 +249,29 @@ export const CustomerApplicationsPage: React.FC = () => {
       fetchApplications()
       fetchStats()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
   const handleBulkStatusUpdate = async (status: string) => {
     if (selectedApplications.length === 0) {
-      alert('Please select applications first')
+      alertModal.showAlert({
+        title: 'No Selection',
+        message: 'Please select applications first',
+        type: 'warning'
+      })
       return
     }
 
-    const reason = prompt(`Enter reason for changing status to ${status}:`)
+    const reason = await alertModal.showPrompt({
+      title: 'Bulk Status Update',
+      message: `Enter reason for changing status to ${status}:`,
+      placeholder: 'Enter reason...'
+    })
     if (!reason) return
 
     try {
@@ -257,7 +285,11 @@ export const CustomerApplicationsPage: React.FC = () => {
       fetchApplications()
       fetchStats()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -309,7 +341,11 @@ export const CustomerApplicationsPage: React.FC = () => {
       setDetailedApplication(response.data.data)
     } catch (err: any) {
       console.error('Error fetching application details:', err)
-      alert(`Error loading details: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error loading details: ${err.message}`,
+        type: 'error'
+      })
     } finally {
       setLoadingDetails(false)
     }
@@ -1248,6 +1284,29 @@ export const CustomerApplicationsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={alertModal.handleClose}
+        onConfirm={alertModal.handleConfirm}
+        title={alertModal.options.title}
+        message={alertModal.options.message}
+        type={alertModal.options.type}
+        confirmText={alertModal.options.confirmText}
+        cancelText={alertModal.options.cancelText}
+        showCancel={alertModal.options.showCancel}
+      />
+
+      <PromptModal
+        isOpen={alertModal.isPromptOpen}
+        onClose={alertModal.handlePromptClose}
+        onConfirm={alertModal.handlePromptConfirm}
+        title={alertModal.promptOptions.title}
+        message={alertModal.promptOptions.message}
+        placeholder={alertModal.promptOptions.placeholder}
+        confirmText={alertModal.promptOptions.confirmText}
+        cancelText={alertModal.promptOptions.cancelText}
+      />
     </div>
   )
 }

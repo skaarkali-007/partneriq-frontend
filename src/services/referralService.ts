@@ -38,7 +38,7 @@ class ReferralService extends ApiService {
         linkUrl: link.url,
         clickCount: link.clickCount || 0,
         conversionCount: link.conversionCount || 0,
-        isActive: true,
+        isActive: link.isActive, // Use the actual isActive status from the API
         createdAt: link.createdAt,
         updatedAt: link.createdAt, // Use createdAt as fallback for updatedAt
         expiresAt: undefined
@@ -53,6 +53,23 @@ class ReferralService extends ApiService {
 
   async createReferralLink(data: CreateReferralLinkRequest): Promise<ReferralLink> {
     return this.post<ReferralLink>('/links', data)
+  }
+
+  async toggleReferralLinkStatus(linkId: string, isActive: boolean): Promise<ReferralLink> {
+    return this.put<ReferralLink>(`/links/${linkId}/status`, { isActive })
+  }
+
+  async deleteReferralLink(linkId: string): Promise<ReferralLink> {
+    return this.delete<ReferralLink>(`/links/${linkId}`)
+  }
+
+  async getReferralLinkAnalytics(linkId: string): Promise<any> {
+    return this.get<any>(`/links/${linkId}/analytics`)
+  }
+
+  async getProductMaterials(productId: string): Promise<any> {
+    // Use the product materials endpoint
+    return api.get(`/api/v1/product/${productId}/materials/active`)
   }
 
   async getCustomerReferrals(marketerId: string, _filters: ReferralFilters): Promise<CustomerReferral[]> {
@@ -122,10 +139,6 @@ class ReferralService extends ApiService {
 
   async updateReferralLink(id: string, data: Partial<ReferralLink>): Promise<ReferralLink> {
     return this.put<ReferralLink>(`/links/${id}`, data)
-  }
-
-  async deleteReferralLink(id: string): Promise<void> {
-    return this.delete<void>(`/links/${id}`)
   }
 
   async trackClick(trackingCode: string, data: any): Promise<void> {

@@ -8,6 +8,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 import  api  from '../../services/api'
+import { AlertModal } from '../../components/ui/AlertModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 interface Product {
   _id: string
   name: string
@@ -52,6 +54,7 @@ export const ProductManagementPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const alertModal = useAlertModal()
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -125,7 +128,11 @@ export const ProductManagementPage: React.FC = () => {
       setShowCreateModal(false)
     } catch (err: any) {
       console.error('Product creation error:', err)
-      alert(`Error creating product: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error creating product: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -144,12 +151,25 @@ export const ProductManagementPage: React.FC = () => {
       fetchProducts()
       setEditingProduct(null)
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
   const deleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
+    const confirmed = await alertModal.showConfirm({
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this product?',
+      type: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true
+    })
+    
+    if (!confirmed) {
       return
     }
 
@@ -167,7 +187,11 @@ export const ProductManagementPage: React.FC = () => {
 
       fetchProducts()
     } catch (err: any) {
-      alert(`Error: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Error',
+        message: `Error: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -415,6 +439,18 @@ export const ProductManagementPage: React.FC = () => {
           }}
         />
       )}
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={alertModal.handleClose}
+        onConfirm={alertModal.handleConfirm}
+        title={alertModal.options.title}
+        message={alertModal.options.message}
+        type={alertModal.options.type}
+        confirmText={alertModal.options.confirmText}
+        cancelText={alertModal.options.cancelText}
+        showCancel={alertModal.options.showCancel}
+      />
     </div>
   )
 }

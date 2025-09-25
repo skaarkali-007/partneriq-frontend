@@ -9,6 +9,8 @@ import {
 } from '@heroicons/react/24/outline'
 
 import api from "../../services/api"
+import { AlertModal } from '../../components/ui/AlertModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 
 interface AuditLog {
   _id: string
@@ -89,6 +91,7 @@ const formatTimestamp = (timestamp: string) => {
 export const ActivityLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
+  const alertModal = useAlertModal()
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState({
     search: '',
@@ -174,7 +177,11 @@ export const ActivityLogsPage: React.FC = () => {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (err: any) {
-      alert(`Export failed: ${err.message}`)
+      alertModal.showAlert({
+        title: 'Export Failed',
+        message: `Export failed: ${err.message}`,
+        type: 'error'
+      })
     }
   }
 
@@ -477,6 +484,18 @@ export const ActivityLogsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={alertModal.handleClose}
+        onConfirm={alertModal.handleConfirm}
+        title={alertModal.options.title}
+        message={alertModal.options.message}
+        type={alertModal.options.type}
+        confirmText={alertModal.options.confirmText}
+        cancelText={alertModal.options.cancelText}
+        showCancel={alertModal.options.showCancel}
+      />
     </div>
   )
 }

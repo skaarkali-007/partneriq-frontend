@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, BarChart3, Target, User, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertModal } from '../ui/AlertModal';
+import { useAlertModal } from '../../hooks/useAlertModal';
 
 interface ConsentTypes {
   necessary: boolean;
@@ -20,6 +22,7 @@ interface ConsentRecord {
 const ConsentPreferences: React.FC = () => {
   const [currentConsent, setCurrentConsent] = useState<ConsentRecord | null>(null);
   const [consentHistory, setConsentHistory] = useState<ConsentRecord[]>([]);
+  const alertModal = useAlertModal();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -112,7 +115,16 @@ const ConsentPreferences: React.FC = () => {
   };
 
   const withdrawConsent = async () => {
-    if (!confirm('Are you sure you want to withdraw all consent? This may limit your experience on our platform.')) {
+    const confirmed = await alertModal.showConfirm({
+      title: 'Withdraw Consent',
+      message: 'Are you sure you want to withdraw all consent? This may limit your experience on our platform.',
+      type: 'warning',
+      confirmText: 'Withdraw',
+      cancelText: 'Cancel',
+      showCancel: true
+    });
+    
+    if (!confirmed) {
       return;
     }
 
@@ -175,6 +187,7 @@ const ConsentPreferences: React.FC = () => {
   }
 
   return (
+    <>
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Privacy & Consent Preferences</h1>
@@ -382,6 +395,19 @@ const ConsentPreferences: React.FC = () => {
         </div>
       </div>
     </div>
+    
+    <AlertModal
+      isOpen={alertModal.isOpen}
+      onClose={alertModal.handleClose}
+      onConfirm={alertModal.handleConfirm}
+      title={alertModal.options.title}
+      message={alertModal.options.message}
+      type={alertModal.options.type}
+      confirmText={alertModal.options.confirmText}
+      cancelText={alertModal.options.cancelText}
+      showCancel={alertModal.options.showCancel}
+    />
+    </>
   );
 };
 

@@ -4,6 +4,9 @@ import { AppDispatch, RootState } from '../../store'
 import { ReferralLink } from '../../types/api'
 import { createReferralLink, updateLinkStats, updateReferralLink } from '../../store/slices/referralSlice'
 import { productService, Product } from '../../services/productService'
+import { referralService } from '../../services/referralService'
+import { AlertModal } from '../ui/AlertModal'
+import { useAlertModal } from '../../hooks/useAlertModal'
 
 interface ReferralLinkGeneratorProps {
   referralLinks: ReferralLink[]
@@ -30,6 +33,7 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
   const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
   const [deletingLinkId, setDeletingLinkId] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const alertModal = useAlertModal()
   const [linkOptions, setLinkOptions] = useState<LinkGenerationOptions>({
     expiryDays: 30,
     campaignTag: '',
@@ -146,75 +150,151 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
       // Update the Redux store immediately for better UX
       dispatch(updateReferralLink({ id: linkId, isActive }))
       
-      // In a real implementation, you would call an API endpoint here
-      // await referralService.updateLinkStatus(linkId, isActive)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Call the API to update the link status
+      await referralService.toggleReferralLinkStatus(linkId, isActive)
       
       console.log(`Link ${linkId} ${isActive ? 'activated' : 'deactivated'} successfully`)
     } catch (error) {
       console.error('Failed to toggle link status:', error)
       // Revert the change if API call fails
       dispatch(updateReferralLink({ id: linkId, isActive: !isActive }))
-      alert('Failed to update link status. Please try again.')
+      alertModal.showAlert({
+        title: 'Error',
+        message: 'Failed to update link status. Please try again.',
+        type: 'error'
+      })
     } finally {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: false }))
     }
   }
 
   const handleDeleteLink = async (linkId: string) => {
-    if (window.confirm('Are you sure you want to delete this referral link? This action cannot be undone.')) {
+    const confirmed = await alertModal.showConfirm({
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this referral link? This action cannot be undone.',
+      type: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true
+    })
+    
+    if (confirmed) {
       setDeletingLinkId(linkId)
       
       try {
-        // In a real implementation, you would call an API endpoint here
-        // await referralService.deleteLink(linkId)
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Call the API to delete the link
+        await referralService.deleteReferralLink(linkId)
         
         console.log(`Link ${linkId} deleted successfully`)
         
         // Show success message
-        alert('Referral link deleted successfully')
+        alertModal.showAlert({
+          title: 'Success',
+          message: 'Referral link deleted successfully',
+          type: 'success'
+        })
         
         // Refresh the links list - in a real app you'd dispatch a delete action
         window.location.reload()
       } catch (error) {
         console.error('Failed to delete link:', error)
-        alert('Failed to delete referral link. Please try again.')
+        alertModal.showAlert({
+          title: 'Error',
+          message: 'Failed to delete referral link. Please try again.',
+          type: 'error'
+        })
       } finally {
         setDeletingLinkId(null)
       }
     }
   }
 
-  const handleViewAnalytics = (linkId: string) => {
-    // In a real implementation, this would navigate to an analytics page or open a modal
-    console.log('Viewing analytics for link:', linkId)
-    
-    // For now, show a simple alert with mock analytics data
-    const link = referralLinks.find(l => l.id === linkId)
-    if (link) {
+  const handleViewAnalytics = async (linkId: string) => {
+    try {
+      // Call the API to get detailed analytics
+      const analytics = await referralService.getReferralLinkAnalytics(linkId)
+      
       const analyticsData = `
+Analytics for Link ${analytics.trackingCode}:
+• Total Clicks: ${analytics.totalClicks || 0}
+• Conversions: ${analytics.totalConversions || 0}
+• Conversion Rate: ${analytics.conversionRate?.toFixed(1) || 0}%
+• Created: ${formatDate(analytics.createdAt)}
+• Status: ${analytics.isActive ? 'Active' : 'Inactive'}
+• Recent Clicks: ${analytics.recentClicks?.length || 0}
+• Recent Conversions: ${analytics.recentConversions?.length || 0}
+      `
+      alertModal.showAlert({
+        title: 'Link Analytics',
+        message: analyticsData,
+        type: 'info'
+      })
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error)
+      
+      // Fallback to local data if API fails
+      const link = referralLinks.find(l => l.id === linkId)
+      if (link) {
+        const analyticsData = `
 Analytics for ${link.productId}:
 • Total Clicks: ${link.clickCount || 0}
 • Conversions: ${link.conversionCount || 0}
 • Conversion Rate: ${getConversionRate(link)}
 • Created: ${formatDate(link.createdAt)}
 • Status: ${link.isActive ? 'Active' : 'Inactive'}
-      `
-      alert(analyticsData)
+        `
+        alertModal.showAlert({
+          title: 'Link Analytics',
+          message: analyticsData,
+          type: 'info'
+        })
+      }
     }
   }
 
-  const handleViewMaterials = (productId: string) => {
-    // In a real implementation, this would open a modal or navigate to a materials page
-    console.log('Viewing promotional materials for product:', productId)
-    
-    // For now, show available materials
-    const materialsInfo = `
+  const handleViewMaterials = async (productId: string) => {
+    try {
+      // Call the API to get actual product materials
+      const response = await referralService.getProductMaterials(productId)
+      const materials = response.data?.data?.materials || []
+      
+      if (materials.length === 0) {
+        alertModal.showAlert({
+          title: 'No Materials',
+          message: 'No promotional materials are currently available for this product.',
+          type: 'info'
+        })
+        return
+      }
+      
+      // Group materials by type
+      const materialsByType = materials.reduce((acc: any, material: any) => {
+        if (!acc[material.materialType]) {
+          acc[material.materialType] = []
+        }
+        acc[material.materialType].push(material)
+        return acc
+      }, {})
+      
+      let materialsInfo = `Promotional Materials for Product ${productId}:\n\n`
+      
+      Object.keys(materialsByType).forEach(type => {
+        const typeCount = materialsByType[type].length
+        materialsInfo += `• ${type.replace('_', ' ').toUpperCase()}: ${typeCount} item${typeCount > 1 ? 's' : ''}\n`
+      })
+      
+      materialsInfo += `\nTotal: ${materials.length} materials available\n\nThese materials are designed to help you promote this product effectively.`
+      
+      alertModal.showAlert({
+        title: 'Promotional Materials',
+        message: materialsInfo,
+        type: 'info'
+      })
+    } catch (error) {
+      console.error('Failed to fetch materials:', error)
+      
+      // Fallback to generic message if API fails
+      const materialsInfo = `
 Promotional Materials for Product ${productId}:
 • Banner Images (300x250, 728x90, 160x600)
 • Email Templates (HTML & Text)
@@ -223,8 +303,13 @@ Promotional Materials for Product ${productId}:
 • Landing Page Assets
 
 These materials are designed to help you promote this product effectively.
-    `
-    alert(materialsInfo)
+      `
+      alertModal.showAlert({
+        title: 'Promotional Materials',
+        message: materialsInfo,
+        type: 'info'
+      })
+    }
   }
 
   const handleCopyLink = async (link: ReferralLink) => {
@@ -251,6 +336,7 @@ These materials are designed to help you promote this product effectively.
   }
 
   return (
+    <>
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -624,5 +710,18 @@ These materials are designed to help you promote this product effectively.
         )}
       </div>
     </div>
+    
+    <AlertModal
+      isOpen={alertModal.isOpen}
+      onClose={alertModal.handleClose}
+      onConfirm={alertModal.handleConfirm}
+      title={alertModal.options.title}
+      message={alertModal.options.message}
+      type={alertModal.options.type}
+      confirmText={alertModal.options.confirmText}
+      cancelText={alertModal.options.cancelText}
+      showCancel={alertModal.options.showCancel}
+    />
+    </>
   )
 }

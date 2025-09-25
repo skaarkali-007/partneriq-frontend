@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AlertModal } from '../ui/AlertModal';
+import { useAlertModal } from '../../hooks/useAlertModal';
 
 interface QuizStepProps {
   onComplete: (data: any) => void;
@@ -115,6 +117,7 @@ const quizQuestions: QuizQuestion[] = [
 export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, onBack }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: number }>({});
+  const alertModal = useAlertModal();
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
@@ -158,7 +161,11 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, onBack }) => {
     const passed = score >= passingScore;
 
     if (!passed) {
-      alert(`You need at least ${passingScore} correct answers to pass. You scored ${score}/${quizQuestions.length}. Please retake the quiz.`);
+      alertModal.showAlert({
+        title: 'Quiz Failed',
+        message: `You need at least ${passingScore} correct answers to pass. You scored ${score}/${quizQuestions.length}. Please retake the quiz.`,
+        type: 'warning'
+      });
       // Reset quiz
       setCurrentQuestion(0);
       setAnswers({});
@@ -190,10 +197,18 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, onBack }) => {
       if (result.success) {
         onComplete(result.data);
       } else {
-        alert('Failed to submit quiz results. Please try again.');
+        alertModal.showAlert({
+          title: 'Submission Failed',
+          message: 'Failed to submit quiz results. Please try again.',
+          type: 'error'
+        });
       }
     } catch (err) {
-      alert('Network error. Please try again.');
+      alertModal.showAlert({
+        title: 'Network Error',
+        message: 'Network error. Please try again.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -310,6 +325,7 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, onBack }) => {
   const isCorrect = selectedAnswer === question.correctAnswer;
 
   return (
+    <>
     <div>
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Compliance Quiz</h2>
@@ -429,5 +445,18 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, onBack }) => {
         </button>
       </div>
     </div>
+    
+    <AlertModal
+      isOpen={alertModal.isOpen}
+      onClose={alertModal.handleClose}
+      onConfirm={alertModal.handleConfirm}
+      title={alertModal.options.title}
+      message={alertModal.options.message}
+      type={alertModal.options.type}
+      confirmText={alertModal.options.confirmText}
+      cancelText={alertModal.options.cancelText}
+      showCancel={alertModal.options.showCancel}
+    />
+    </>
   );
 };
