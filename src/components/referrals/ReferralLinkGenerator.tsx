@@ -375,19 +375,20 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
         {referralLinks.length > 0 && (
           <div>
             <h4 className="text-md font-medium text-gray-900 mb-3">Your Referral Links</h4>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {referralLinks.map((link) => (
                 <div
                   key={link.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
+                  {/* Header Section */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                         <h5 className="text-sm font-medium text-gray-900 truncate">
                           {(link.productId as any)?.name || `Product ${link.productId}`}
                         </h5>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${
                           link.isActive 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-red-100 text-red-800'
@@ -396,121 +397,121 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
-                        <span>Code: {link.trackingCode}</span>
-                        <span>Created: {formatDate(link.createdAt)}</span>
-                        <span>Expires: {link.expiresAt ? formatDate(link.expiresAt) : 'Never'}</span>
+                      {/* Metadata - Responsive Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500 mb-3">
+                        <div className="truncate">
+                          <span className="font-medium">Code:</span> {link.trackingCode}
+                        </div>
+                        <div className="truncate">
+                          <span className="font-medium">Created:</span> {formatDate(link.createdAt)}
+                        </div>
+                        <div className="truncate">
+                          <span className="font-medium">Expires:</span> {link.expiresAt ? formatDate(link.expiresAt) : 'Never'}
+                        </div>
                       </div>
                       
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span className="text-blue-600 font-medium">
-                          {link.clickCount || 0} clicks
-                        </span>
-                        <span className="text-green-600 font-medium">
-                          {link.conversionCount || 0} conversions
-                        </span>
-                        <span className="text-purple-600 font-medium">
-                          {getConversionRate(link)} rate
-                        </span>
-                      </div>
-                      
-                      <div className="mt-2">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={link.linkUrl}
-                            readOnly
-                            className="flex-1 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none"
-                          />
-                          <button
-                            onClick={() => handleCopyLink(link)}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            {copiedLinkId === link.id ? (
-                              <>
-                                <svg className="h-4 w-4 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Copied!
-                              </>
-                            ) : (
-                              <>
-                                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Copy
-                              </>
-                            )}
-                          </button>
+                      {/* Stats - Responsive Grid */}
+                      <div className="grid grid-cols-3 gap-4 text-sm mb-3">
+                        <div className="text-center sm:text-left">
+                          <div className="text-blue-600 font-medium">{link.clickCount || 0}</div>
+                          <div className="text-xs text-gray-500">clicks</div>
+                        </div>
+                        <div className="text-center sm:text-left">
+                          <div className="text-green-600 font-medium">{link.conversionCount || 0}</div>
+                          <div className="text-xs text-gray-500">conversions</div>
+                        </div>
+                        <div className="text-center sm:text-left">
+                          <div className="text-purple-600 font-medium">{getConversionRate(link)}</div>
+                          <div className="text-xs text-gray-500">rate</div>
                         </div>
                       </div>
                     </div>
                     
-                    {/* Link Management Actions */}
-                    <div className="flex flex-col space-y-2 ml-4">
+                    {/* Action Buttons - Responsive Layout */}
+                    <div className="flex sm:flex-col gap-2 sm:gap-1 flex-wrap sm:flex-nowrap sm:ml-4">
                       <button
                         onClick={() => handleToggleLinkStatus(link.id, !link.isActive)}
-                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${
+                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded whitespace-nowrap ${
                           link.isActive 
                             ? 'text-red-700 bg-red-100 hover:bg-red-200' 
                             : 'text-green-700 bg-green-100 hover:bg-green-200'
                         }`}
                         title={link.isActive ? 'Deactivate link' : 'Activate link'}
                       >
-                        {link.isActive ? (
-                          <>
-                            <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Pause
-                          </>
-                        ) : (
-                          <>
-                            <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Resume
-                          </>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleDeleteLink(link.id)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100"
-                        title="Delete link"
-                      >
                         <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.isActive ? "M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" : "M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"} />
                         </svg>
-                        Delete
+                        <span className="hidden sm:inline">{link.isActive ? 'Pause' : 'Resume'}</span>
                       </button>
                       
                       <button
                         onClick={() => {
-                          // In real implementation, this would show analytics for the specific link
                           console.log('Viewing analytics for link:', link.id)
                         }}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                         title="View analytics"
                       >
                         <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        Analytics
+                        <span className="hidden sm:inline">Analytics</span>
                       </button>
                       
                       <button
                         onClick={() => {
-                          // In real implementation, this would show promotional materials for the product
                           console.log('Viewing promotional materials for product:', link.productId)
                         }}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 whitespace-nowrap"
                         title="View promotional materials"
                       >
                         <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        Materials
+                        <span className="hidden sm:inline">Materials</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteLink(link.id)}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 whitespace-nowrap"
+                        title="Delete link"
+                      >
+                        <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span className="hidden sm:inline">Delete</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Link URL Section */}
+                  <div className="border-t border-gray-100 pt-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Referral Link</label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        value={link.linkUrl}
+                        readOnly
+                        className="flex-1 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded px-3 py-2 focus:outline-none min-w-0"
+                      />
+                      <button
+                        onClick={() => handleCopyLink(link)}
+                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
+                      >
+                        {copiedLinkId === link.id ? (
+                          <>
+                            <svg className="h-4 w-4 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy Link
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

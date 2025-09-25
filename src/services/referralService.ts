@@ -34,16 +34,14 @@ class ReferralService extends ApiService {
         id: link.id,
         marketerId: marketerId,
         productId: link.product !== 'N/A' ? link.product : '',
-        productName: link.product !== 'N/A' ? link.product : 'Unknown Product',
         trackingCode: link.trackingCode,
-        url: link.url,
+        linkUrl: link.url,
         clickCount: link.clickCount || 0,
         conversionCount: link.conversionCount || 0,
         isActive: true,
         createdAt: link.createdAt,
-        expiresAt: undefined,
-        lastClickAt: undefined,
-        metadata: {}
+        updatedAt: link.createdAt, // Use createdAt as fallback for updatedAt
+        expiresAt: undefined
       }))
       
       return links
