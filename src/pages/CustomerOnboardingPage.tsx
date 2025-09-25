@@ -6,6 +6,7 @@ import { SimplePersonalInfoStep } from '../components/onboarding/SimplePersonalI
 import { KYCDocumentsStep } from '../components/onboarding/KYCDocumentsStep';
 import { SignatureStep } from '../components/onboarding/SignatureStep';
 import { CompletionStep } from '../components/onboarding/CompletionStep';
+import api from '@/services/api';
 
 interface OnboardingData {
   customerId?: string;
@@ -46,18 +47,20 @@ export const CustomerOnboardingPage: React.FC = () => {
   const startOnboarding = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/customers/onboarding/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          trackingCode,
-          productId
-        })
-      });
+      // const response = await fetch('/api/v1/customers/onboarding/start', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     trackingCode,
+      //     productId
+      //   })
+      // });
 
-      const result = await response.json();
+      const response = await api.post('/customers/onboarding/start', { trackingCode, productId } , )
+      
+      const result = await response.data;
       
       if (result.success) {
         setOnboardingData(result.data);
