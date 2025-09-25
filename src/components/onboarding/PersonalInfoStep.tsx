@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '@/services/api'
 
 interface PersonalInfoStepProps {
   customerId: string;
@@ -74,15 +75,9 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
 
   const validateForm = async () => {
     try {
-      const response = await fetch('/api/v1/customers/onboarding/validate/1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await api.post('/customers/onboarding/validate/1', formData);
 
-      const result = await response.json();
+      const result = response.data;
       
       if (result.success) {
         setErrors([]);
@@ -106,15 +101,9 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
     setLoading(true);
     
     try {
-      const response = await fetch(`/api/v1/customers/onboarding/${customerId}/personal-info`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await api.put(`/customers/onboarding/${customerId}/personal-info`, formData);
 
-      const result = await response.json();
+      const result = response.data;
       
       if (result.success) {
         onComplete(result.data);

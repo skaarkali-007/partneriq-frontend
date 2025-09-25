@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import api from "@/services/api"
 
 interface KYCDocumentsStepProps {
   customerId: string;
@@ -125,12 +126,9 @@ export const KYCDocumentsStep: React.FC<KYCDocumentsStepProps> = ({
         formData.append(`documentTypes[${index}]`, doc.type);
       });
 
-      const response = await fetch(`/api/v1/customers/onboarding/${customerId}/kyc-documents`, {
-        method: 'POST',
-        body: formData
-      });
+      const response = await api.post(`/customers/onboarding/${customerId}/kyc-documents`,  formData);
 
-      const result = await response.json();
+      const result = response.data;
       
       if (result.success) {
         onComplete(result.data);

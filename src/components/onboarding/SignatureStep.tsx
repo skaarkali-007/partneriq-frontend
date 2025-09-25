@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import api from "@/services/api"
 
 interface SignatureStepProps {
   customerId: string;
@@ -113,15 +114,9 @@ export const SignatureStep: React.FC<SignatureStepProps> = ({
       // Get signature as base64 data URL
       const signatureData = canvas.toDataURL('image/png');
 
-      const response = await fetch(`/api/v1/customers/onboarding/${customerId}/signature`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ signatureData })
-      });
+      const response = await api.post(`/customers/onboarding/${customerId}/signature`, { signatureData });
 
-      const result = await response.json();
+      const result = response.data;
       
       if (result.success) {
         onComplete(result.data);

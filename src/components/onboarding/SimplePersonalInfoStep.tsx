@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from "@/services/api"
 
 interface SimplePersonalInfoStepProps {
   customerId: string;
@@ -110,15 +111,9 @@ export const SimplePersonalInfoStep: React.FC<SimplePersonalInfoStepProps> = ({
     setLoading(true);
     
     try {
-      const response = await fetch(`/api/v1/customers/onboarding/${customerId}/simple-personal-info`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await api.put(`/customers/onboarding/${customerId}/simple-personal-info`, formData);
 
-      const result = await response.json();
+      const result = response.data;
       
       if (result.success) {
         onComplete(result.data);
