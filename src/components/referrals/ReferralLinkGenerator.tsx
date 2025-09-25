@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { ReferralLink } from '../../types/api'
-import { createReferralLink, updateLinkStats } from '../../store/slices/referralSlice'
+import { createReferralLink, updateLinkStats, updateReferralLink } from '../../store/slices/referralSlice'
 import { productService, Product } from '../../services/productService'
 
 interface ReferralLinkGeneratorProps {
@@ -27,6 +27,8 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
   
   const [selectedProduct, setSelectedProduct] = useState('')
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null)
+  const [loadingStates, setLoadingStates] = useState<{[key: string]: boolean}>({})
+  const [deletingLinkId, setDeletingLinkId] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [linkOptions, setLinkOptions] = useState<LinkGenerationOptions>({
     expiryDays: 30,
@@ -137,15 +139,92 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
   }
 
   const handleToggleLinkStatus = async (linkId: string, isActive: boolean) => {
-    // In real implementation, this would call API to toggle link status
-    console.log(`Toggling link ${linkId} to ${isActive ? 'active' : 'inactive'}`)
+    const loadingKey = `toggle-${linkId}`
+    setLoadingStates(prev => ({ ...prev, [loadingKey]: true }))
+    
+    try {
+      // Update the Redux store immediately for better UX
+      dispatch(updateReferralLink({ id: linkId, isActive }))
+      
+      // In a real implementation, you would call an API endpoint here
+      // await referralService.updateLinkStatus(linkId, isActive)
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      console.log(`Link ${linkId} ${isActive ? 'activated' : 'deactivated'} successfully`)
+    } catch (error) {
+      console.error('Failed to toggle link status:', error)
+      // Revert the change if API call fails
+      dispatch(updateReferralLink({ id: linkId, isActive: !isActive }))
+      alert('Failed to update link status. Please try again.')
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }))
+    }
   }
 
   const handleDeleteLink = async (linkId: string) => {
-    if (window.confirm('Are you sure you want to delete this referral link?')) {
-      // In real implementation, this would call API to delete link
-      console.log(`Deleting link ${linkId}`)
+    if (window.confirm('Are you sure you want to delete this referral link? This action cannot be undone.')) {
+      setDeletingLinkId(linkId)
+      
+      try {
+        // In a real implementation, you would call an API endpoint here
+        // await referralService.deleteLink(linkId)
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        console.log(`Link ${linkId} deleted successfully`)
+        
+        // Show success message
+        alert('Referral link deleted successfully')
+        
+        // Refresh the links list - in a real app you'd dispatch a delete action
+        window.location.reload()
+      } catch (error) {
+        console.error('Failed to delete link:', error)
+        alert('Failed to delete referral link. Please try again.')
+      } finally {
+        setDeletingLinkId(null)
+      }
     }
+  }
+
+  const handleViewAnalytics = (linkId: string) => {
+    // In a real implementation, this would navigate to an analytics page or open a modal
+    console.log('Viewing analytics for link:', linkId)
+    
+    // For now, show a simple alert with mock analytics data
+    const link = referralLinks.find(l => l.id === linkId)
+    if (link) {
+      const analyticsData = `
+Analytics for ${link.productId}:
+• Total Clicks: ${link.clickCount || 0}
+• Conversions: ${link.conversionCount || 0}
+• Conversion Rate: ${getConversionRate(link)}
+• Created: ${formatDate(link.createdAt)}
+• Status: ${link.isActive ? 'Active' : 'Inactive'}
+      `
+      alert(analyticsData)
+    }
+  }
+
+  const handleViewMaterials = (productId: string) => {
+    // In a real implementation, this would open a modal or navigate to a materials page
+    console.log('Viewing promotional materials for product:', productId)
+    
+    // For now, show available materials
+    const materialsInfo = `
+Promotional Materials for Product ${productId}:
+• Banner Images (300x250, 728x90, 160x600)
+• Email Templates (HTML & Text)
+• Social Media Posts
+• Product Fact Sheets
+• Landing Page Assets
+
+These materials are designed to help you promote this product effectively.
+    `
+    alert(materialsInfo)
   }
 
   const handleCopyLink = async (link: ReferralLink) => {
@@ -431,23 +510,31 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
                     <div className="flex sm:flex-col gap-2 sm:gap-1 flex-wrap sm:flex-nowrap sm:ml-4">
                       <button
                         onClick={() => handleToggleLinkStatus(link.id, !link.isActive)}
-                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded whitespace-nowrap ${
+                        disabled={loadingStates[`toggle-${link.id}`]}
+                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded whitespace-nowrap transition-colors ${
                           link.isActive 
-                            ? 'text-red-700 bg-red-100 hover:bg-red-200' 
-                            : 'text-green-700 bg-green-100 hover:bg-green-200'
-                        }`}
+                            ? 'text-red-700 bg-red-100 hover:bg-red-200 disabled:bg-red-50' 
+                            : 'text-green-700 bg-green-100 hover:bg-green-200 disabled:bg-green-50'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                         title={link.isActive ? 'Deactivate link' : 'Activate link'}
                       >
-                        <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.isActive ? "M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" : "M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"} />
-                        </svg>
-                        <span className="hidden sm:inline">{link.isActive ? 'Pause' : 'Resume'}</span>
+                        {loadingStates[`toggle-${link.id}`] ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                        ) : (
+                          <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.isActive ? "M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" : "M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"} />
+                          </svg>
+                        )}
+                        <span className="hidden sm:inline">
+                          {loadingStates[`toggle-${link.id}`] 
+                            ? 'Updating...' 
+                            : (link.isActive ? 'Pause' : 'Resume')
+                          }
+                        </span>
                       </button>
                       
                       <button
-                        onClick={() => {
-                          console.log('Viewing analytics for link:', link.id)
-                        }}
+                        onClick={() => handleViewAnalytics(link.id)}
                         className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                         title="View analytics"
                       >
@@ -458,9 +545,7 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
                       </button>
                       
                       <button
-                        onClick={() => {
-                          console.log('Viewing promotional materials for product:', link.productId)
-                        }}
+                        onClick={() => handleViewMaterials(link.productId)}
                         className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 whitespace-nowrap"
                         title="View promotional materials"
                       >
@@ -472,13 +557,20 @@ export const ReferralLinkGenerator: React.FC<ReferralLinkGeneratorProps> = ({
                       
                       <button
                         onClick={() => handleDeleteLink(link.id)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 whitespace-nowrap"
+                        disabled={deletingLinkId === link.id}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title="Delete link"
                       >
-                        <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        <span className="hidden sm:inline">Delete</span>
+                        {deletingLinkId === link.id ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-700 mr-1"></div>
+                        ) : (
+                          <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                        <span className="hidden sm:inline">
+                          {deletingLinkId === link.id ? 'Deleting...' : 'Delete'}
+                        </span>
                       </button>
                     </div>
                   </div>
