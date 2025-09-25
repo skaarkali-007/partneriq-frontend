@@ -75,7 +75,7 @@ export const fetchDashboardData = createAsyncThunk(
       // Fetch dashboard data directly from the API
       const api = (await import('../../services/api')).default
       
-      const response = await api.get('/api/v1/marketer/dashboard')
+      const response = await api.get('/marketer/dashboard')
       const dashboardData = response.data.data
       
       console.log('Dashboard API response:', dashboardData)
