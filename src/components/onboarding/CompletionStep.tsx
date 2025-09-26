@@ -7,11 +7,13 @@ interface CompletionStepProps {
     name: string;
     description: string;
   };
+  kycSkipped?: boolean;
 }
 
 export const CompletionStep: React.FC<CompletionStepProps> = ({
   customerId,
-  product
+  product,
+  kycSkipped = false
 }) => {
   return (
     <div className="text-center py-8">
@@ -29,8 +31,28 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
       
       <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
         Thank you for completing your application for {product?.name || 'our financial product'}. 
-        Your application has been submitted and is now being reviewed by our team.
+        {kycSkipped 
+          ? 'Your basic application has been submitted. You can complete your identity verification later from your account dashboard.'
+          : 'Your application has been submitted and is now being reviewed by our team.'
+        }
       </p>
+
+      {kycSkipped && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-orange-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="text-left">
+              <h4 className="text-sm font-medium text-orange-800">Identity Verification Pending</h4>
+              <p className="text-sm text-orange-700 mt-1">
+                You chose to skip the identity verification step. To unlock all features and complete your application, 
+                please complete your KYC verification from your account dashboard when convenient.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Application Details */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 max-w-md mx-auto">

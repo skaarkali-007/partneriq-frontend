@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { RootState } from '../store'
+import { authService } from '../services/authService'
 import toast from 'react-hot-toast'
 
 interface KYCFormData {
@@ -22,8 +23,10 @@ interface KYCFormData {
 
 export const KYCVerificationPage: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useSelector((state: RootState) => state.auth)
-  const [step, setStep] = useState<'info' | 'documents' | 'review' | 'complete'>('info')
+  const isSkipable = location.state?.skipable !== false // Default to skipable unless explicitly set to false
+  const [step, setStep] = useState<'intro' | 'info' | 'documents' | 'review' | 'complete'>('intro')
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<KYCFormData>({
     firstName: user?.firstName || '',
@@ -174,6 +177,109 @@ export const KYCVerificationPage: React.FC = () => {
     toast.success('Welcome to the platform! Your account is now fully set up.')
     navigate('/dashboard')
   }
+
+  const handleSkipKYC = async () => {
+    try {
+      setIsLoading(true)
+      await authService.skipKYC()
+      toast('You can complete KYC verification later from your profile settings.', {
+        icon: 'ℹ️',
+      })
+      navigate('/dashboard')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to skip KYC verification')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleStartKYC = () => {
+    setStep('info')
+  }
+
+  const renderIntroStep = () => (
+    <div className="text-center space-y-6">
+      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
+        <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Identity Verification (KYC)</h2>
+        <p className="mt-2 text-gray-600">
+          Complete your identity verification to unlock all platform features and start earning commissions.
+        </p>
+      </div>
+
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-blue-700">
+              <strong>Why KYC?</strong> Identity verification helps us comply with financial regulations and 
+              protects both you and our platform from fraud. It's a one-time process that typically takes 1-2 business days to review.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 p-4 rounded-lg text-left">
+        <h3 className="text-sm font-medium text-gray-900 mb-2">What you'll need:</h3>
+        <ul className="text-sm text-gray-600 space-y-1">
+          <li className="flex items-center">
+            <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Government-issued photo ID (driver's license, passport, or state ID)
+          </li>
+          <li className="flex items-center">
+            <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Proof of address (utility bill, bank statement, or lease agreement)
+          </li>
+          <li className="flex items-center">
+            <svg className="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            About 5-10 minutes to complete the process
+          </li>
+        </ul>
+      </div>
+
+      <div className="space-y-3">
+        <button
+          onClick={handleStartKYC}
+          disabled={isLoading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          Start Identity Verification
+        </button>
+        
+        {isSkipable && (
+          <button
+            onClick={handleSkipKYC}
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            {isLoading ? 'Skipping...' : 'Skip for Now'}
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500">
+        {isSkipable 
+          ? 'You can complete identity verification later, but some features may be limited.'
+          : 'Identity verification is required to access all platform features.'
+        }
+      </p>
+    </div>
+  )
 
   const renderPersonalInfoStep = () => (
     <div className="space-y-6">
@@ -584,7 +690,8 @@ export const KYCVerificationPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Progress Indicator */}
-        <div className="mb-8">
+        {step !== 'intro' && (
+          <div className="mb-8">
           <div className="flex items-center justify-center space-x-4">
             {['info', 'documents', 'review', 'complete'].map((stepName, index) => (
               <div key={stepName} className="flex items-center">
@@ -613,9 +720,11 @@ export const KYCVerificationPage: React.FC = () => {
             </span>
           </div>
         </div>
+        )}
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-sm border p-8">
+          {step === 'intro' && renderIntroStep()}
           {step === 'info' && renderPersonalInfoStep()}
           {step === 'documents' && renderDocumentsStep()}
           {step === 'review' && renderReviewStep()}

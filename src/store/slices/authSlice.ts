@@ -12,6 +12,9 @@ export interface User {
   lastLogin?: string
   mfaEnabled: boolean
   mfaSetupCompleted: boolean
+  kycRequired: boolean
+  kycCompleted: boolean
+  kycSkipped: boolean
   createdAt: string
   updatedAt: string
 }

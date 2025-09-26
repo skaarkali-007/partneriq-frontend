@@ -27,34 +27,18 @@ export const MFASetupPage: React.FC = () => {
       return
     }
     
-    // For marketers, check KYC status
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/profile/kyc/status`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (response.ok) {
-        const kycData = await response.json()
-        
-        // If KYC is already completed, go to marketer dashboard
-        if (kycData.status === 'approved' || kycData.status === 'completed') {
-          toast.success('Welcome! Your account is fully verified.')
-          navigate('/dashboard')
-        } else {
-          // If KYC not completed, go to KYC verification
-          navigate('/kyc-verification')
-        }
-      } else {
-        // If can't check KYC status, assume KYC needed for marketers
-        navigate('/kyc-verification')
+    // For marketers, check if KYC is required and not completed/skipped
+    if (user?.role === 'marketer') {
+      if (user.kycRequired && !user.kycCompleted && !user.kycSkipped) {
+        // KYC is required but not completed or skipped
+        navigate('/kyc-verification', { state: { skipable: true } })
+        return
       }
-    } catch (error) {
-      // If error checking KYC status, default to marketer dashboard
-      toast.success('Welcome to your dashboard!')
-      navigate('/dashboard')
     }
+    
+    // If KYC is completed, skipped, or not required, go to dashboard
+    toast.success('Welcome to your dashboard!')
+    navigate('/dashboard')
   }
 
   const handleStartSetup = async () => {

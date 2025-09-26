@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
 import { DashboardLayout } from '../components/dashboard/DashboardLayout'
 import toast from 'react-hot-toast'
@@ -27,6 +28,7 @@ interface KYCStatus {
 }
 
 export const AccountPage: React.FC = () => {
+  const navigate = useNavigate()
   const { user } = useSelector((state: RootState) => state.auth)
   const [activeTab, setActiveTab] = useState<'profile' | 'kyc' | 'security' | 'preferences'>('profile')
   const [isLoading, setIsLoading] = useState(false)
@@ -61,54 +63,49 @@ export const AccountPage: React.FC = () => {
       setIsLoading(true)
       
       // Fetch user profile data including KYC status
-      const response = await api.get('/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      const response = await api.get('/profile')
 
-      if (response.data || response.data.data) {
-        const result = response.data || response.data.data
-        if (result.success && result.data) {
-          const profile = result.data
-          
-          // Update profile data
-          setProfileData(prev => ({
-            ...prev,
-            firstName: profile.firstName || prev.firstName,
-            lastName: profile.lastName || prev.lastName,
-            phoneNumber: profile.phone || '',
-            address: profile.address ? {
-              street: profile.address.street || '',
-              city: profile.address.city || '',
-              state: profile.address.state || '',
-              zipCode: profile.address.postalCode || '',
-              country: profile.address.country || 'US'
-            } : prev.address
-          }))
-          
-          // Update KYC status
-          setKycStatus({
-            status: profile.kycStatus === 'pending' ? 'not_submitted' : 
-                   profile.kycStatus === 'in_review' ? 'pending' :
-                   profile.kycStatus === 'approved' ? 'approved' : 
-                   profile.kycStatus === 'rejected' ? 'rejected' : 'not_submitted',
-            submittedAt: profile.kycSubmittedAt,
-            reviewedAt: profile.kycApprovedAt || profile.kycRejectedAt,
-            rejectionReason: profile.kycRejectionReason
-          })
-        }
-      } else if (response.status === 404) {
-        // Profile doesn't exist yet, which is fine for new users
-        console.log('Profile not found - user may need to complete onboarding')
-      } else {
-        console.error('Failed to load profile data:', response.statusText)
-        toast.error('Failed to load account information')
+      if (response.data && response.data.success && response.data.data) {
+        const profile = response.data.data
+        
+        // Update profile data
+        setProfileData(prev => ({
+          ...prev,
+          firstName: profile.firstName || prev.firstName,
+          lastName: profile.lastName || prev.lastName,
+          phoneNumber: profile.phone || '',
+          address: profile.address ? {
+            street: profile.address.street || '',
+            city: profile.address.city || '',
+            state: profile.address.state || '',
+            zipCode: profile.address.postalCode || '',
+            country: profile.address.country || 'US'
+          } : prev.address
+        }))
+        
+        // Update KYC status
+        setKycStatus({
+          status: profile.kycStatus === 'pending' ? 'not_submitted' : 
+                 profile.kycStatus === 'in_review' ? 'pending' :
+                 profile.kycStatus === 'approved' ? 'approved' : 
+                 profile.kycStatus === 'rejected' ? 'rejected' : 'not_submitted',
+          submittedAt: profile.kycSubmittedAt,
+          reviewedAt: profile.kycApprovedAt || profile.kycRejectedAt,
+          rejectionReason: profile.kycRejectionReason
+        })
       }
-    } catch (error) {
-      console.error('Failed to load account data:', error)
-      toast.error('Failed to load account information')
+    } catch (error: any) {
+      // Handle 404 error gracefully - profile doesn't exist yet
+      if (error.response?.status === 404) {
+        console.log('Profile not found - user may need to complete onboarding')
+        // Keep default values for new users
+      } else {
+        console.error('Failed to load account data:', error)
+        // Only show error toast for non-404 errors
+        if (error.response?.status !== 404) {
+          toast.error('Failed to load account information')
+        }
+      }
     } finally {
       setIsLoading(false)
     }
@@ -117,9 +114,40 @@ export const AccountPage: React.FC = () => {
   const handleProfileUpdate = async () => {
     try {
       setIsSaving(true)
-      toast.success('Profile updated successfully!')
-    } catch (error) {
-      toast.error('Failed to update profile')
+      
+      // Prepare profile data for update
+      const updateData = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phoneNumber,
+        address: {
+          street: profileData.address.street,
+          city: profileData.address.city,
+          state: profileData.address.state,
+          postalCode: profileData.address.zipCode,
+          country: profileData.address.country
+        }
+      }
+      
+      // Try to update existing profile, or create if it doesn't exist
+      try {
+        await api.put('/profile', updateData)
+        toast.success('Profile updated successfully!')
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          // Profile doesn't exist, create it
+          await api.post('/profile', updateData)
+          toast.success('Profile created successfully!')
+        } else {
+          throw error
+        }
+      }
+      
+      // Reload account data to reflect changes
+      await loadAccountData()
+    } catch (error: any) {
+      console.error('Profile update error:', error)
+      toast.error(error.response?.data?.error || 'Failed to update profile')
     } finally {
       setIsSaving(false)
     }
@@ -340,7 +368,7 @@ export const AccountPage: React.FC = () => {
           <div>
             {kycStatus.status === 'not_submitted' && (
               <button
-                onClick={() => window.location.href = '/kyc-verification'}
+                onClick={() => navigate('/kyc-verification', { state: { skipable: false } })}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Start KYC
@@ -348,7 +376,7 @@ export const AccountPage: React.FC = () => {
             )}
             {kycStatus.status === 'rejected' && (
               <button
-                onClick={() => window.location.href = '/kyc-verification'}
+                onClick={() => navigate('/kyc-verification', { state: { skipable: false } })}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 Resubmit

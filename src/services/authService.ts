@@ -86,6 +86,9 @@ class AuthService extends ApiService {
     return this.post<void>('/change-password', { currentPassword, newPassword })
   }
 
+  async skipKYC(): Promise<void> {
+    return this.post<void>('/skip-kyc')
+  }
 
 }
 

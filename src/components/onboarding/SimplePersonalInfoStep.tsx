@@ -4,6 +4,12 @@ import api from "@/services/api"
 interface SimplePersonalInfoStepProps {
   customerId: string;
   onComplete: (data: any) => void;
+  onSkip?: () => void;
+  initialData?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
 }
 
 interface SimplePersonalInfo {
@@ -22,12 +28,14 @@ interface SimplePersonalInfo {
 
 export const SimplePersonalInfoStep: React.FC<SimplePersonalInfoStepProps> = ({
   customerId,
-  onComplete
+  onComplete,
+  onSkip,
+  initialData
 }) => {
   const [formData, setFormData] = useState<SimplePersonalInfo>({
-    firstName: '',
-    lastName: '',
-    email: '',
+    firstName: initialData?.firstName || '',
+    lastName: initialData?.lastName || '',
+    email: initialData?.email || '',
     phone: '',
     dateOfBirth: '',
     consents: {
@@ -134,6 +142,14 @@ export const SimplePersonalInfoStep: React.FC<SimplePersonalInfoStepProps> = ({
         <p className="text-gray-600">
           Please provide your basic personal details to complete your application.
         </p>
+        {onSkip && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Note:</strong> You can skip this step and complete your information later from your account dashboard. 
+              However, some features may be limited until your identity is verified.
+            </p>
+          </div>
+        )}
       </div>
 
       {errors.length > 0 && (
@@ -285,21 +301,32 @@ export const SimplePersonalInfoStep: React.FC<SimplePersonalInfoStepProps> = ({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-6">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Saving...
-              </div>
-            ) : (
-              'Complete Application'
-            )}
-          </button>
+        <div className="flex justify-between pt-6">
+          {onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="text-gray-600 hover:text-gray-800 px-4 py-2 text-sm font-medium transition-colors"
+            >
+              Skip for now
+            </button>
+          )}
+          <div className="flex space-x-3 ml-auto">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </div>
+              ) : (
+                'Complete Application'
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

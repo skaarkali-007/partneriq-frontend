@@ -13,6 +13,7 @@ interface OnboardingData {
   currentStep: number;
   totalSteps: number;
   onboardingStatus: string;
+  kycStatus?: string;
   product?: {
     id: string;
     name: string;
@@ -81,6 +82,25 @@ export const CustomerOnboardingPage: React.FC = () => {
     }));
   };
 
+  const handleSkipStep = async () => {
+    if (!onboardingData.customerId) return;
+    
+    try {
+      const response = await api.post(`/customers/onboarding/${onboardingData.customerId}/skip-kyc`);
+      
+      if (response.data.success) {
+        setOnboardingData(prev => ({
+          ...prev,
+          ...response.data.data
+        }));
+      } else {
+        setError(response.data.message || 'Failed to skip KYC process');
+      }
+    } catch (err: any) {
+      setError('Network error. Please try again.');
+    }
+  };
+
   const renderCurrentStep = () => {
     if (!onboardingData.customerId) return null;
 
@@ -94,6 +114,7 @@ export const CustomerOnboardingPage: React.FC = () => {
             <SimplePersonalInfoStep
               customerId={onboardingData.customerId}
               onComplete={handleStepComplete}
+              onSkip={handleSkipStep}
             />
           );
         case 2:
@@ -101,6 +122,7 @@ export const CustomerOnboardingPage: React.FC = () => {
             <CompletionStep
               customerId={onboardingData.customerId}
               product={onboardingData.product}
+              kycSkipped={onboardingData.kycStatus === 'skipped'}
             />
           );
         default:
@@ -115,6 +137,7 @@ export const CustomerOnboardingPage: React.FC = () => {
           <PersonalInfoStep
             customerId={onboardingData.customerId}
             onComplete={handleStepComplete}
+            onSkip={handleSkipStep}
           />
         );
       case 2:
@@ -136,6 +159,7 @@ export const CustomerOnboardingPage: React.FC = () => {
           <CompletionStep
             customerId={onboardingData.customerId}
             product={onboardingData.product}
+            kycSkipped={onboardingData.kycStatus === 'skipped'}
           />
         );
       default:
