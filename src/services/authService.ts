@@ -29,6 +29,7 @@ export interface RegisterResponse {
   user: User
   message: string
   emailVerificationRequired: boolean
+  tokens?: AuthTokens
 }
 
 export interface RefreshTokenResponse {

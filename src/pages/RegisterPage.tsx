@@ -67,10 +67,17 @@ export const RegisterPage: React.FC = () => {
 
       const result = await dispatch(registerUser(completeRegistrationData)).unwrap()
       
+      // Check if we're in alpha stage
+      const isAlphaStage = import.meta.env.VITE_STAGE === 'alpha'
+      
       // Check if email verification is required (backend automatically sends OTP)
-      if (result.emailVerificationRequired) {
+      if (result.emailVerificationRequired && !isAlphaStage) {
         toast.success('Registration successful! Please check your email for the 6-digit verification code.')
         navigate('/verify-otp', { state: { email: registerData.email, isNewRegistration: true } })
+      } else if (isAlphaStage) {
+        // In alpha stage, redirect to MFA setup
+        toast.success('Registration successful! Let\'s set up MFA for your account security.')
+        navigate('/mfa-setup', { state: { skipable: true } })
       } else {
         // Fallback: manually send OTP if not sent by backend
         try {
@@ -105,30 +112,50 @@ export const RegisterPage: React.FC = () => {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Marketer Account</h2>
         <p className="text-gray-600 mb-4">
-          Create your account to get started. After registration, you'll need to verify your email address to activate your account.
+          {import.meta.env.VITE_STAGE === 'alpha' 
+            ? 'Create your account to get started. Your account will be activated immediately, then we\'ll help you set up MFA for security (alpha stage).'
+            : 'Create your account to get started. After registration, you\'ll need to verify your email address to activate your account.'
+          }
         </p>
         
         {/* Registration Steps */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h3 className="text-sm font-medium text-blue-900 mb-2">Registration Process:</h3>
-          <ol className="text-sm text-blue-800 space-y-1">
-            <li className="flex items-center">
-              <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
-              Fill out your basic information
-            </li>
-            <li className="flex items-center">
-              <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
-              Verify your email with the 6-digit code we'll send
-            </li>
-            <li className="flex items-center">
-              <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">3</span>
-              Set up MFA for enhanced security (optional but recommended)
-            </li>
-            <li className="flex items-center">
-              <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">4</span>
-              Start earning commissions!
-            </li>
-          </ol>
+          {import.meta.env.VITE_STAGE === 'alpha' ? (
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                Fill out your basic information
+              </li>
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                Set up MFA for enhanced security (recommended)
+              </li>
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">3</span>
+                Start earning commissions! (Alpha stage - email verification skipped)
+              </li>
+            </ol>
+          ) : (
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                Fill out your basic information
+              </li>
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                Verify your email with the 6-digit code we'll send
+              </li>
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">3</span>
+                Set up MFA for enhanced security (optional but recommended)
+              </li>
+              <li className="flex items-center">
+                <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs mr-2">4</span>
+                Start earning commissions!
+              </li>
+            </ol>
+          )}
         </div>
       </div>
 

@@ -15,6 +15,7 @@ export interface User {
   kycRequired: boolean
   kycCompleted: boolean
   kycSkipped: boolean
+  createdInAlphaStage: boolean
   createdAt: string
   updatedAt: string
 }
@@ -160,8 +161,18 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false
-        // Registration typically requires email verification, so no immediate login
-        state.user = action.payload.user
+        // In alpha stage, users are immediately authenticated
+        if (action.payload.tokens) {
+          state.user = action.payload.user
+          state.token = action.payload.tokens.accessToken
+          state.refreshToken = action.payload.tokens.refreshToken
+          state.isAuthenticated = true
+          localStorage.setItem('token', action.payload.tokens.accessToken)
+          localStorage.setItem('refreshToken', action.payload.tokens.refreshToken)
+        } else {
+          // Registration typically requires email verification, so no immediate login
+          state.user = action.payload.user
+        }
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false
