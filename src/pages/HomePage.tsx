@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PartnerIQLogo from '../components/common/PartnerIQLogo';
+import PartnerIQLogo, {PartnerIQLogoWhite} from '../components/common/PartnerIQLogo';
 import FAQSection from '../components/common/FAQSection';
 
 export const HomePage: React.FC = () => {
@@ -12,7 +12,7 @@ export const HomePage: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
-                <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+                <PartnerIQLogo size="md" clickable={false} />
               </Link>
             </div>
             
@@ -384,7 +384,7 @@ export const HomePage: React.FC = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="mb-4">
-                <PartnerIQLogo size="md" />
+                <PartnerIQLogoWhite size="md" /> 
               </div>
               <p className="text-gray-400">
                 The complete platform for managing financial affiliate programs.

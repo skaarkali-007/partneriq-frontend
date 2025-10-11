@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../store/slices/authSlice'
 import { AppDispatch } from '../store'
 import AccountStatusBanner from './AccountStatusBanner'
+import PartnerIQLogo from './common/PartnerIQLogo'
+
 
 interface LayoutProps {
   children: React.ReactNode
@@ -26,7 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+              <PartnerIQLogo size="2xl" />
             </Link>
             
             <nav className="flex items-center space-x-4">

@@ -11,7 +11,7 @@ export const FeaturesPage: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
-                <img src="/partner-iq-logo.svg" alt="Partner IQ" width="60" height="16" />
+                <PartnerIQLogo size="md" clickable={false} />
               </Link>
             </div>
             
@@ -397,7 +397,7 @@ export const FeaturesPage: React.FC = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="mb-4">
-                <PartnerIQLogo size="md" />
+                <PartnerIQLogo size="md" clickable={false} />
               </div>
               <p className="text-gray-400">
                 The complete platform for managing financial affiliate programs.

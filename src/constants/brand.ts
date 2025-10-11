@@ -35,6 +35,7 @@ export const LOGO_SIZES = {
   md: { width: 160, height: 42 },
   lg: { width: 200, height: 53 },
   xl: { width: 240, height: 64 },
+  '2xl': { width: 360, height: 96 },
 } as const;
 
 // Brand name constant
